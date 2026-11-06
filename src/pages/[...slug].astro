@@ -1,0 +1,40 @@
+---
+import { LOCALES, PREFIX, type Locale } from '../i18n/locales';
+import { articles, CATALOG, PAGE_SLUGS, sitePage } from '../lib/content';
+import Home from '../views/Home.astro';
+import HardeningIndex from '../views/HardeningIndex.astro';
+import HardeningItem from '../views/HardeningItem.astro';
+import ArticlesIndex from '../views/ArticlesIndex.astro';
+import ArticleView from '../views/ArticleView.astro';
+import TextPage from '../views/TextPage.astro';
+
+export function getStaticPaths() {
+  const routes: { params: { slug: string | undefined }; props: Record<string, unknown> }[] = [];
+  const add = (locale: Locale, path: string, props: Record<string, unknown>) => {
+    const slug = [PREFIX[locale], path].filter(Boolean).join('/');
+    routes.push({ params: { slug: slug === '' ? undefined : slug }, props: { locale, kind: props.kind, ...props } });
+  };
+  for (const locale of LOCALES) {
+    add(locale, '', { kind: 'home' });
+    add(locale, 'hardening', { kind: 'hardening-index' });
+    for (const item of CATALOG.items) add(locale, `hardening/${item.id}`, { kind: 'hardening-item', item });
+    add(locale, 'articles', { kind: 'articles-index' });
+    for (const article of articles(locale)) add(locale, `articles/${article.slug}`, { kind: 'article', article });
+    for (const slug of PAGE_SLUGS) {
+      const page = sitePage(locale, slug);
+      if (page) add(locale, slug, { kind: 'page', page });
+    }
+  }
+  return routes;
+}
+
+const props = Astro.props as any;
+const { kind, locale } = props;
+---
+
+{kind === 'home' && <Home locale={locale} />}
+{kind === 'hardening-index' && <HardeningIndex locale={locale} />}
+{kind === 'hardening-item' && <HardeningItem locale={locale} item={props.item} />}
+{kind === 'articles-index' && <ArticlesIndex locale={locale} />}
+{kind === 'article' && <ArticleView locale={locale} article={props.article} />}
+{kind === 'page' && <TextPage locale={locale} page={props.page} />}

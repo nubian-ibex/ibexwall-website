@@ -1,0 +1,210 @@
+{
+  "kernel.kptr-restrict": {
+    "why": "Many kernel exploits need to know exactly where particular code or data sits in memory. Kernel addresses can leak through several interfaces, and an attacker who already runs a program on your computer can collect them and aim an exploit precisely. Hiding them fixes no bug, but it takes away a map the attacker would otherwise use.",
+    "how": "Sets the kernel parameter kernel.kptr_restrict to 2. Kernel pointers printed with the %pK format are then replaced with zeros for every user, including root. Value 1 hides them only from users without the CAP_SYSLOG capability.",
+    "who": "Fits nearly every desktop and server. Leave it at 0 or 1 if you debug the kernel itself, or run profiling tools on a development machine that need real kernel addresses.",
+    "notice": "Usually nothing. Tools such as perf may warn that kernel address maps are restricted, and /proc/kallsyms shows zeros even to root.",
+    "related": ["kernel.dmesg-restrict", "kernel.perf-events"],
+    "keywords": ["kptr_restrict", "hide kernel pointers linux", "kernel.kptr_restrict 2", "linux kernel address leak", "kallsyms zeros"]
+  },
+  "kernel.dmesg-restrict": {
+    "why": "The kernel log records driver messages, hardware details and sometimes memory addresses. Any local user or program can normally read it with dmesg, so a compromised app can learn things that help it attack the kernel. Restricting it keeps that detail with administrators.",
+    "how": "Sets kernel.dmesg_restrict to 1. Reading the kernel ring buffer with dmesg then requires the CAP_SYSLOG capability, which root has. Note that the same messages can still reach users who may read the system journal, for example members of the adm group.",
+    "who": "Good for shared computers and for anyone who wants to limit what a hijacked program can learn. Leave it off if regular users on a development machine rely on running dmesg without sudo.",
+    "notice": "Running dmesg as a normal user fails with Operation not permitted. Use sudo dmesg, or journalctl -k if your account may read the journal.",
+    "related": ["kernel.kptr-restrict"],
+    "keywords": ["dmesg_restrict", "restrict dmesg linux", "dmesg operation not permitted", "kernel.dmesg_restrict 1", "hide kernel log from users"]
+  },
+  "kernel.unprivileged-bpf": {
+    "why": "eBPF lets programs load small pieces of code that the kernel runs for them. The kernel checks that code with a verifier, and bugs in that verifier have repeatedly let ordinary users escape to full control of the machine. If only privileged programs may load eBPF, those bugs are out of reach for everyone else.",
+    "how": "Sets kernel.unprivileged_bpf_disabled to 1. Calls to bpf() without CAP_BPF or CAP_SYS_ADMIN then fail with a permission error. The kernel documentation says that once set to 1 this cannot be cleared until reboot; value 2 disables it but lets an admin change it later.",
+    "who": "Right for most desktops and servers. Leave it off if you run eBPF tools as a normal user, such as some tracing or networking experiments.",
+    "notice": "Programs that load eBPF without privileges fail with Operation not permitted. Run them as root or with the right capability. Standard desktop software rarely needs this.",
+    "related": ["kernel.bpf-jit-harden", "kernel.perf-events"],
+    "keywords": ["unprivileged_bpf_disabled", "disable unprivileged ebpf linux", "bpf operation not permitted", "kernel.unprivileged_bpf_disabled=1", "restrict ebpf to root"]
+  },
+  "kernel.bpf-jit-harden": {
+    "why": "eBPF programs are turned into machine code by a just-in-time compiler. An attacker who can load a program may craft constants inside it so that, read from a different offset, they become instructions the attacker chose. This is called JIT spraying, and hardening is meant to stop it.",
+    "how": "Sets net.core.bpf_jit_harden to 2. Hardening such as constant blinding is then applied to eBPF programs from all users, not just unprivileged ones. The kernel documentation notes that this costs some performance and that it applies when the JIT is in use.",
+    "who": "A cheap precaution for nearly everyone. Hosts that run heavy eBPF packet processing and care about every bit of speed may prefer to measure first.",
+    "notice": "Usually nothing. eBPF programs can run slightly slower, which only shows on heavily loaded networking or tracing setups.",
+    "related": ["kernel.unprivileged-bpf"],
+    "keywords": ["bpf_jit_harden", "net.core.bpf_jit_harden 2", "harden ebpf jit linux", "bpf jit spraying", "ebpf constant blinding"]
+  },
+  "kernel.ldisc-autoload": {
+    "why": "A TTY line discipline is a piece of kernel code that handles data on a serial-style terminal. Some old ones had flaws, and an ordinary program could ask the kernel to load them with the TIOCSETD request, then exploit the flaw. Not allowing automatic loading removes that route for unprivileged users.",
+    "how": "Sets dev.tty.ldisc_autoload to 0. Line disciplines that are built in or already loaded still work, but the kernel no longer loads additional ones on request from a program without the needed privilege.",
+    "who": "Nearly all desktops and servers. Leave it off if you use serial-attached gear that relies on loading such a module on demand, for example some SLIP, CAN-over-serial or modem setups.",
+    "notice": "Usually nothing. If a rare serial tool fails with an error about an unknown line discipline, an administrator can load the matching module by hand first.",
+    "related": ["modules.net-protocols", "kernel.userfaultfd"],
+    "keywords": ["ldisc_autoload", "dev.tty.ldisc_autoload 0", "tty line discipline exploit", "tiocsetd autoload linux", "disable tty line discipline autoload"]
+  },
+  "kernel.userfaultfd": {
+    "why": "The userfaultfd system call lets a program handle page faults itself. Attackers have used it to pause the kernel at an exact moment, widening a tiny timing gap enough to win a race in a bug such as a use-after-free. Taking away the kernel-mode form of this call from ordinary users makes many such bugs harder to exploit.",
+    "how": "Sets vm.unprivileged_userfaultfd to 0. According to the kernel documentation, users without CAP_SYS_PTRACE can then only use userfaultfd for faults that happen in user mode, by passing the UFFD_USER_MODE_ONLY flag. Access through /dev/userfaultfd can be granted separately.",
+    "who": "Fine for nearly every desktop and server. Review it if you run virtual machine live migration, checkpoint and restore tools, or other software built around userfaultfd.",
+    "notice": "Almost never visible. Software that needs full userfaultfd as a normal user may fail with a permission error until it is given /dev/userfaultfd or run with more rights.",
+    "related": ["kernel.unprivileged-bpf", "kernel.ldisc-autoload"],
+    "keywords": ["unprivileged_userfaultfd", "vm.unprivileged_userfaultfd 0", "userfaultfd exploit linux", "disable userfaultfd", "restrict userfaultfd"]
+  },
+  "kernel.perf-events": {
+    "why": "The performance events interface lets programs measure what the CPU and kernel are doing. It brings a large amount of kernel code within reach of ordinary users, and it has had many vulnerabilities. Tightening it reduces what a local attacker can touch.",
+    "how": "Sets kernel.perf_event_paranoid to 2. Per the kernel documentation, users without CAP_PERFMON then cannot profile the kernel, use raw tracepoints or CPU-wide events, but can still measure their own user-space programs. Some distributions patch in stricter levels.",
+    "who": "Good for desktops and servers where nobody profiles code. Many distributions already use 2 or higher. Developers who use perf on the kernel or system-wide should leave it as it is, or use sudo.",
+    "notice": "perf record for kernel or system-wide samples fails with a message that mentions perf_event_paranoid. Profiling your own program in user space usually still works at level 2.",
+    "related": ["kernel.kptr-restrict", "kernel.unprivileged-bpf", "kernel.ptrace"],
+    "keywords": ["perf_event_paranoid", "kernel.perf_event_paranoid 2", "perf permission denied linux", "restrict perf events", "perf_event_paranoid security"]
+  },
+  "kernel.kexec": {
+    "why": "kexec lets the running kernel load and jump into another kernel without going through the firmware. An attacker who has already gained administrator rights could use it to start a kernel they prepared, one that ignores your security settings or hides their tools. Switching it off removes that step.",
+    "how": "Sets kernel.kexec_load_disabled to 1, which disables the kexec_load and kexec_file_load system calls. The kernel documentation states that after it is set to 1 it cannot be set back to 0 until the next reboot.",
+    "who": "Suitable for desktops and servers that do not use kexec. Leave it off if you rely on kdump crash capture, kexec-based fast reboots, or live kernel update tools.",
+    "notice": "Commands such as kexec -l fail with a permission error, and a crash-kernel service that starts after the setting is applied may fail to load. Only a reboot reverses it.",
+    "related": ["kernel.sysrq"],
+    "keywords": ["kexec_load_disabled", "disable kexec linux", "kernel.kexec_load_disabled 1", "kexec security", "kdump kexec_load_disabled"]
+  },
+  "kernel.sysrq": {
+    "why": "The magic SysRq key combination talks directly to the kernel and works even when the screen is locked. Anyone at the keyboard can use it to reboot immediately, kill every process or force other actions without logging in. Turning it off closes that keyboard shortcut.",
+    "how": "Sets kernel.sysrq to 0, which switches off all SysRq functions invoked from the keyboard. The kernel documentation notes that writing to /proc/sysrq-trigger as an administrator is still allowed, since this setting only affects the keyboard.",
+    "who": "Useful for shared or public computers and laptops left unattended. Leave it on if you value the REISUB emergency sequence for recovering from a frozen desktop. Some prefer a middle value that allows only sync and reboot.",
+    "notice": "Pressing Alt+SysRq combinations does nothing, so a frozen machine can only be fixed with the power button. If the emergency keys stop responding, this is the cause.",
+    "related": ["kernel.kexec"],
+    "keywords": ["kernel.sysrq 0", "disable magic sysrq key linux", "sysrq security", "reisub disabled", "magic sysrq key security risk"]
+  },
+  "kernel.ptrace": {
+    "why": "ptrace is the call debuggers use to read and change another running program. Without limits, malware running as you can attach to your browser, SSH agent or password manager and pull secrets out of their memory. The kernel documentation uses exactly this scenario to explain why Yama exists.",
+    "how": "Sets kernel.yama.ptrace_scope to 1 (restricted ptrace). A process can then attach only to its own descendants, or to a process that has named it as an allowed debugger. Mode 2 allows only administrators and mode 3 forbids it entirely.",
+    "who": "A sound default for desktops and servers. Developers who attach debuggers to running programs can still use sudo, or start the program under the debugger.",
+    "notice": "gdb -p or strace -p on an already running program fails with ptrace: Operation not permitted. Starting the program from gdb or strace still works, as does using sudo.",
+    "related": ["kernel.perf-events", "fs.suid-dumpable"],
+    "keywords": ["ptrace_scope", "kernel.yama.ptrace_scope 1", "ptrace operation not permitted", "yama ptrace linux", "gdb attach operation not permitted", "restrict ptrace"]
+  },
+  "kernel.user-namespaces": {
+    "why": "User namespaces let an ordinary program act as a pretend administrator inside a private space. That is useful for sandboxes, but it also exposes a lot of privileged kernel code to unprivileged users, and many local privilege escalation bugs have started there. Turning them off shrinks that attack surface.",
+    "how": "Sets user.max_user_namespaces to 0, so no new user namespaces can be created by anyone. Programs that already run inside one keep working, but new ones cannot start them.",
+    "who": "Only for locked-down machines where you do not run Flatpak, rootless containers or a sandboxed browser. For most desktops this is a trade-off, because those sandboxes protect you too, so removing them can leave you less safe.",
+    "notice": "Flatpak apps fail with a bwrap error about creating a namespace. Chromium and Firefox may report that their sandbox is unavailable. Rootless containers and many AppImages stop starting.",
+    "related": ["kernel.unprivileged-bpf", "kernel.ptrace"],
+    "keywords": ["max_user_namespaces", "user.max_user_namespaces 0", "disable user namespaces linux", "bwrap no permissions to create new namespace", "unprivileged user namespaces security"]
+  },
+  "fs.protected-files": {
+    "why": "In a shared folder like /tmp, anyone can create files. An attacker can plant a link there that points at something important, such as a file in your home folder, and wait for a script or privileged program to write to the usual name. The program follows the link and overwrites the target.",
+    "how": "Turns on four kernel protections: fs.protected_symlinks=1 and fs.protected_hardlinks=1 limit following and creating links in sticky world-writable directories, and fs.protected_fifos=2 and fs.protected_regular=2 stop programs from opening, with create, a pipe or file owned by someone else in such folders.",
+    "who": "Suitable for everyone. Many systems already enable most of these. Leave them off only if a legacy script depends on reusing files that another user created in /tmp.",
+    "notice": "Usually nothing. A script that writes to a file in /tmp created by a different user may fail with Permission denied.",
+    "related": ["mounts.tmp-noexec"],
+    "keywords": ["protected_symlinks", "fs.protected_regular 2", "protected_hardlinks sysctl", "/tmp symlink attack linux", "fs.protected_fifos"]
+  },
+  "fs.suid-dumpable": {
+    "why": "When a program that runs with extra rights, such as sudo or passwd, crashes, the kernel can save its memory to a file. That memory can hold passwords, keys or hashes, and a file left in a readable place hands them to whoever finds it. Not writing the dump removes that leak.",
+    "how": "Sets fs.suid_dumpable to 0, the traditional behavior: processes that changed privilege levels or are execute-only are not dumped. The other modes (1 and 2) deliberately allow dumps for debugging, with mode 1 unsafe according to the kernel documentation.",
+    "who": "Good for any machine that is not used to debug setuid programs. Developers chasing a crash in a setuid tool can turn it back on temporarily.",
+    "notice": "Nothing in normal use. A crash of a privileged program leaves no core file or crash report, which only matters when you want to investigate that crash.",
+    "related": ["kernel.ptrace"],
+    "keywords": ["suid_dumpable", "fs.suid_dumpable 0", "core dump setuid programs", "disable core dumps privileged programs", "suid_dumpable security"]
+  },
+  "net.tcp-syncookies": {
+    "why": "A SYN flood sends huge numbers of connection requests and never finishes them. Each half-open connection takes memory, so the server fills up and stops answering real visitors. SYN cookies let the machine keep answering while the flood lasts.",
+    "how": "Sets net.ipv4.tcp_syncookies to 1. When the queue of half-open connections overflows, the kernel stops storing them and encodes the needed state in the reply instead, so a flood does not use up memory.",
+    "who": "Anything that accepts TCP connections: servers, home labs, laptops running services. It only takes effect under load, so there is little reason to leave it off. Most distributions already enable it.",
+    "notice": "Nothing, as it only matters during an overload. During a flood, some optional TCP features may be unavailable on the affected connections.",
+    "related": ["net.tcp-rfc1337"],
+    "keywords": ["tcp_syncookies", "net.ipv4.tcp_syncookies 1", "syn flood protection linux", "enable syn cookies", "linux ddos sysctl"]
+  },
+  "net.tcp-rfc1337": {
+    "why": "After a TCP connection closes, the kernel keeps its record for a short while in a state called TIME-WAIT so stray packets are not mistaken for a new connection. A forged reset packet sent during that period can destroy the record early, which opens the door to confusion and hijacking. This is known as TIME-WAIT assassination.",
+    "how": "Sets net.ipv4.tcp_rfc1337 to 1. Reset (RST) packets that arrive for a socket in the TIME-WAIT state are then dropped instead of ending that state early.",
+    "who": "Fine for almost any computer. It departs slightly from strict TCP behavior in a way that RFC 1337 suggests, so a team with unusual network gear may want to test it first.",
+    "notice": "Nothing in everyday use.",
+    "related": ["net.tcp-syncookies", "net.tcp-sack"],
+    "keywords": ["tcp_rfc1337", "net.ipv4.tcp_rfc1337 1", "time-wait assassination", "tcp rst time-wait sysctl", "rfc1337 linux"]
+  },
+  "net.redirects": {
+    "why": "An ICMP redirect is a message from a router saying use this other router for that destination. On shared Wi-Fi, an attacker can send a forged one so your traffic flows through their machine, where it can be watched or changed. Refusing redirects keeps your routes under your own control.",
+    "how": "Sets the accept_redirects and secure_redirects options to 0 for IPv4 and accept_redirects to 0 for IPv6, on the all and default interface groups. It also sets send_redirects to 0 so this computer does not send redirects to others.",
+    "who": "Right for desktops, laptops and most servers. A machine that works as a router may want to keep sending redirects, and a few small networks rely on them.",
+    "notice": "Nothing on ordinary networks.",
+    "related": ["net.source-routing", "net.rp-filter", "net.ipv6-router-adverts"],
+    "keywords": ["accept_redirects", "disable icmp redirects linux", "net.ipv4.conf.all.accept_redirects 0", "send_redirects", "icmp redirect man in the middle"]
+  },
+  "net.source-routing": {
+    "why": "Source routing lets the sender of a packet dictate the path it takes. An attacker can use it to pull traffic through a machine they control, or to get around rules that depend on where packets are expected to arrive from. Almost no legitimate network uses it today.",
+    "how": "Sets accept_source_route to 0 for IPv4 and IPv6 on the all and default interface groups. Packets that carry their own route are then dropped.",
+    "who": "Suitable for practically everyone. Leave it off only for network testing or lab setups that deliberately use source-routed packets.",
+    "notice": "Nothing on ordinary networks. Only special diagnostic tools that use source routing are affected.",
+    "related": ["net.redirects", "net.rp-filter"],
+    "keywords": ["accept_source_route", "disable source routing linux", "net.ipv4.conf.all.accept_source_route 0", "ip source route attack", "ipv6 source routing sysctl"]
+  },
+  "net.rp-filter": {
+    "why": "Attackers often put a false sender address on packets, either to hide who they are or to pass as a trusted machine. Reverse path filtering checks whether a reply to that address would go out the same network link the packet arrived on. If it would not, the packet is dropped.",
+    "how": "Sets net.ipv4.conf.all.rp_filter and net.ipv4.conf.default.rp_filter to 1, which is strict mode. A packet is accepted only if the best route back to its source goes through the interface it came in on.",
+    "who": "Good for ordinary single-connection computers and simple servers. Leave it off, or use loose mode (2), on machines with several network links, policy routing, or some VPN setups.",
+    "notice": "Connections that work on one network path fail on another, or a VPN stops passing traffic. Dropped packets are counted by nstat as IPReversePathFilter, which points to this setting.",
+    "related": ["net.redirects", "net.source-routing"],
+    "keywords": ["rp_filter", "reverse path filtering linux", "net.ipv4.conf.all.rp_filter 1", "ip spoofing protection sysctl", "rp_filter vpn problem"]
+  },
+  "net.ipv6-router-adverts": {
+    "why": "On an IPv6 network, routers announce themselves with router advertisements, and your computer believes them. A malicious device on the same network can send its own and become your default gateway, placing itself between you and the internet. Ignoring the announcements closes that route.",
+    "how": "Sets net.ipv6.conf.all.accept_ra and net.ipv6.conf.default.accept_ra to 0, so the kernel ignores router advertisements. Without them it cannot configure IPv6 addresses and routes automatically.",
+    "who": "Only for networks where you set IPv6 by hand, or where you do not use IPv6. On normal home and office networks, which hand out addresses this way, leave it off.",
+    "notice": "IPv6 stops working: ip -6 addr shows only a link-local address, and sites that need IPv6 can be unreachable. IPv4 usually keeps working.",
+    "related": ["net.redirects"],
+    "keywords": ["accept_ra", "ipv6 router advertisement attack", "net.ipv6.conf.all.accept_ra 0", "disable ipv6 router advertisements", "no ipv6 address after sysctl"]
+  },
+  "net.tcp-sack": {
+    "why": "Selective acknowledgements let TCP report exactly which pieces arrived, so only the missing ones are resent. The code that handles them has had serious bugs, and in 2019 a flaw known as SACK Panic let a remote attacker crash a Linux machine with specially crafted packets. Turning SACK off removes this type of target.",
+    "how": "Sets net.ipv4.tcp_sack to 0. TCP connections then fall back to a simpler way of recovering lost packets, without selective acknowledgements.",
+    "who": "A defense in depth choice for servers that face untrusted traffic. Known flaws are already fixed in current kernels, so for a desktop the speed cost is often a worse deal. Leave it on if you use slow or lossy links.",
+    "notice": "Downloads and uploads can be slower on Wi-Fi, mobile or long-distance connections that lose packets. On clean wired networks you may notice nothing.",
+    "related": ["net.tcp-syncookies", "net.tcp-rfc1337"],
+    "keywords": ["tcp_sack", "net.ipv4.tcp_sack 0", "disable tcp sack linux", "sack panic cve-2019-11477", "selective acknowledgements security"]
+  },
+  "modules.net-protocols": {
+    "why": "Linux can load drivers for old or rare network protocols such as DCCP, SCTP, AX.25 and ATM the moment a program opens a socket of that type, with no administrator involved. Several of these have had serious bugs. For example, in 2017 a flaw in DCCP (CVE-2017-6074) let a local user gain root by making the kernel load that module.",
+    "how": "Adds a modprobe configuration that makes loading each module in the net-protocols group fail. Because the kernel asks modprobe when an unknown protocol is requested, an ordinary program can no longer trigger the load.",
+    "who": "Nearly every desktop and server. Leave it off if you use SCTP (some telecom and WebRTC software), CAN bus, amateur radio networking, or similar gear.",
+    "notice": "Almost never. A program that needs one of these protocols fails to open its socket with an error such as Protocol not supported or Address family not supported.",
+    "related": ["modules.rare-filesystems", "kernel.ldisc-autoload"],
+    "keywords": ["blacklist dccp sctp linux", "disable obscure network protocols", "cve-2017-6074 dccp", "modprobe install dccp /bin/false", "disable kernel module autoloading"]
+  },
+  "modules.rare-filesystems": {
+    "why": "A USB stick or disk image can be built to trigger a bug in the code that reads its file system. The kernel contains many drivers for old or specialized formats, and the less-used ones get little review. If the driver cannot load, a crafted disk cannot reach it.",
+    "how": "Adds a modprobe configuration that blocks loading the modules in the rare-filesystems group. Mounting such a disk then fails because the kernel cannot load the file system driver.",
+    "who": "Good for people who only use common formats such as ext4, btrfs, xfs, FAT, exFAT and NTFS. Leave it off if you read DVDs or UDF images, old Mac disks, or embedded images.",
+    "notice": "Mounting a blocked format fails with an error such as unknown filesystem type. Optical discs and UDF images are the most likely to surface this.",
+    "related": ["modules.network-filesystems", "modules.net-protocols"],
+    "keywords": ["blacklist udf module linux", "disable rare filesystems linux", "unknown filesystem type udf", "modprobe install hfs /bin/false", "block cramfs hfsplus"]
+  },
+  "modules.network-filesystems": {
+    "why": "Mounting a network share means the kernel talks to a remote server using code that parses data the server sends. A malicious or compromised server can try to exploit bugs in that code. If you never use such shares, you do not need the code loaded at all.",
+    "how": "Adds a modprobe configuration that blocks the modules in the network-filesystems group, which cover NFS and SMB/CIFS clients. Attempts to mount such shares then fail because the driver cannot be loaded.",
+    "who": "Only if you never mount NFS or SMB shares, which is true for many laptops. Leave it off if you use a NAS, a company file server or any NFS home directory.",
+    "notice": "Mounting a share fails with an error such as unknown filesystem type nfs or cifs. If a mounted share is missing after boot, this is a likely cause.",
+    "related": ["modules.rare-filesystems"],
+    "keywords": ["disable nfs cifs linux", "block smb nfs kernel modules", "mount nfs unknown filesystem type", "blacklist cifs module", "modprobe install nfs /bin/true"]
+  },
+  "modules.bluetooth": {
+    "why": "Bluetooth has a long record of vulnerabilities, some of which could be exploited by someone nearby without touching your computer. If you never use it, the radio and the kernel code that talks to it are risk with no benefit. Blocking the driver removes both.",
+    "how": "Adds a modprobe configuration that blocks loading the modules in the bluetooth group, which are the core Bluetooth stack and the common USB adapter driver (btusb). Without them the adapter cannot start.",
+    "who": "For desktops and servers that have no use for Bluetooth. Leave it off if you use wireless keyboards, mice, headphones, game controllers, or phone file transfer.",
+    "notice": "The Bluetooth switch disappears from the settings, and bluetoothctl reports no controller. Bluetooth keyboards, mice and headphones will not connect.",
+    "related": ["modules.net-protocols"],
+    "keywords": ["disable bluetooth linux security", "blacklist btusb bluetooth", "bluetooth no default controller", "turn off bluetooth kernel module", "modprobe install bluetooth /bin/false"]
+  },
+  "modules.vivid": {
+    "why": "The vivid driver creates fake video devices for testing video software, and it has no use on a normal computer. Bugs in it have allowed privilege escalation in the past. If it is not loaded, those bugs cannot be used. Since it is usually not loaded anyway, the gain is small but the cost is zero.",
+    "how": "Adds a modprobe configuration that blocks loading the vivid module. Any attempt to load it, by an administrator or by an attacker who can run modprobe, then fails.",
+    "who": "Everyone except developers who test video capture or camera software with virtual devices and need vivid.",
+    "notice": "Nothing for normal users. A developer who tries to load vivid sees modprobe fail, and no virtual test cameras appear.",
+    "related": ["modules.net-protocols"],
+    "keywords": ["vivid kernel module", "blacklist vivid linux", "vivid driver privilege escalation", "disable vivid v4l2 test driver", "modprobe install vivid /bin/false"]
+  },
+  "mounts.tmp-noexec": {
+    "why": "After breaking in, malware and exploit scripts often download a program into /tmp, because anyone can write there, and then run it. Mounting /tmp so that nothing in it can be executed breaks that step and forces the attacker to find another place.",
+    "how": "Sets the noexec mount option on /tmp, so the kernel refuses to execute programs stored there and refuses to map files from it as executable code. It does not stop an interpreter from reading a script, so bash /tmp/script.sh can still run.",
+    "who": "Suits servers and tidy desktops where software is installed from the package manager. Developers and anyone who builds software or runs installers should think twice, as a lot of tooling expects to run things from /tmp.",
+    "notice": "Programs fail with Permission denied or failed to map segment from shared object. Installers, build tools, package scripts and some Java or Python modules that unpack code into /tmp are the usual victims.",
+    "related": ["fs.protected-files"],
+    "keywords": ["/tmp noexec", "mount tmp noexec linux", "permission denied /tmp noexec", "failed to map segment from shared object", "secure /tmp mount options"]
+  }
+}

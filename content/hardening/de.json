@@ -1,0 +1,435 @@
+{
+  "kernel.kptr-restrict": {
+    "why": "Viele Kernel-Exploits müssen genau wissen, wo bestimmter Code oder bestimmte Daten im Speicher liegen. Kernel-Adressen können über mehrere Schnittstellen lecken, und ein Angreifer, der bereits ein Programm auf Ihrem Rechner laufen hat, kann sie sammeln und den Exploit genau zielen. Sie zu verbergen behebt keinen Fehler, nimmt dem Angreifer aber eine Karte, die er sonst benutzen würde.",
+    "how": "Setzt den Kernelparameter kernel.kptr_restrict auf 2. Kernel-Zeiger, die im Format %pK ausgegeben werden, erscheinen dann für jeden Benutzer, auch root, als Nullen. Der Wert 1 verbirgt sie nur für Benutzer ohne die Capability CAP_SYSLOG.",
+    "who": "Passt auf fast jeden Desktop und Server. Lassen Sie 0 oder 1, wenn Sie den Kernel selbst debuggen oder auf einer Entwicklungsmachine Profiling-Werkzeuge nutzen, die echte Kernel-Adressen brauchen.",
+    "notice": "Meist nichts. Werkzeuge wie perf können warnen, dass Kernel-Adresskarten eingeschränkt sind, und /proc/kallsyms zeigt sogar root Nullen.",
+    "related": [
+      "kernel.dmesg-restrict",
+      "kernel.perf-events"
+    ],
+    "keywords": [
+      "kptr_restrict",
+      "kernel zeiger verbergen linux",
+      "kernel.kptr_restrict 2",
+      "kernel adressleck linux",
+      "kallsyms nullen"
+    ]
+  },
+  "kernel.dmesg-restrict": {
+    "why": "Das Kernel-Log enthält Treibermeldungen, Hardwaredetails und manchmal Speicheradressen. Jeder lokale Benutzer kann es normalerweise mit dmesg lesen, also kann eine kompromittierte App Dinge erfahren, die beim Angriff auf den Kernel helfen. Die Einschränkung behält diese Details bei den Administratoren.",
+    "how": "Setzt kernel.dmesg_restrict auf 1. Das Lesen des Ringpuffers mit dmesg erfordert dann die Capability CAP_SYSLOG, die root besitzt. Dieselben Meldungen erreichen weiterhin jeden, der das Systemjournal lesen darf, etwa Mitglieder der Gruppe adm.",
+    "who": "Gut für gemeinsam genutzte Rechner und alle, die einschränken wollen, was ein übernommenes Programm erfahren kann. Lassen Sie es aus, wenn normale Benutzer auf einer Entwicklungsmachine dmesg ohne sudo brauchen.",
+    "notice": "dmesg als normaler Benutzer schlägt mit Operation not permitted fehl. Nutzen Sie sudo dmesg oder journalctl -k, wenn Ihr Konto das Journal lesen darf.",
+    "related": [
+      "kernel.kptr-restrict"
+    ],
+    "keywords": [
+      "dmesg_restrict",
+      "dmesg einschränken linux",
+      "dmesg operation not permitted",
+      "kernel.dmesg_restrict 1",
+      "kernel log vor benutzern verbergen"
+    ]
+  },
+  "kernel.unprivileged-bpf": {
+    "why": "eBPF erlaubt Programmen, kleine Codestücke zu laden, die der Kernel für sie ausführt. Der Kernel prüft diesen Code mit einem Verifier, und Fehler in diesem Verifier haben wiederholt gewöhnlichen Benutzern die volle Kontrolle über die Maschine verschafft. Wenn nur privilegierte Programme eBPF laden dürfen, sind diese Fehler für alle anderen außer Reichweite.",
+    "how": "Setzt kernel.unprivileged_bpf_disabled auf 1. Aufrufe von bpf() ohne CAP_BPF oder CAP_SYS_ADMIN schlagen dann mit einer Berechtigungsfehler fehl. Die Kernel-Dokumentation sagt, dass der Wert 1 erst nach einem Neustart zurückgesetzt werden kann; der Wert 2 deaktiviert ebenfalls, lässt Admins aber eine spätere Änderung zu.",
+    "who": "Richtig für die meisten Desktops und Server. Lassen Sie es aus, wenn Sie eBPF-Werkzeuge als normaler Benutzer nutzen, etwa einige Tracing- oder Netzwerkexperimente.",
+    "notice": "Programme, die eBPF ohne Privilegien laden, schlagen mit Operation not permitted fehl. Starten Sie sie als root oder mit der passenden Capability. Übliche Desktop-Software braucht das kaum.",
+    "related": [
+      "kernel.bpf-jit-harden",
+      "kernel.perf-events"
+    ],
+    "keywords": [
+      "unprivileged_bpf_disabled",
+      "unprivilegiertes ebpf deaktivieren linux",
+      "bpf operation not permitted",
+      "kernel.unprivileged_bpf_disabled=1",
+      "ebpf auf root beschränken"
+    ]
+  },
+  "kernel.bpf-jit-harden": {
+    "why": "eBPF-Programme werden von einem Just-in-time-Compiler in Maschinencode übersetzt. Ein Angreifer, der ein Programm laden kann, fügt so Konstanten ein, dass sie, von einem anderen Versatz gelesen, zu selbstgewählten Befehlen werden. Das nennt man JIT spraying, und die Härtung soll es verhindern.",
+    "how": "Setzt net.core.bpf_jit_harden auf 2. Härtungen wie das Verblenden von Konstanten gelten dann für eBPF-Programme aller Benutzer, nicht nur der unprivilegierten. Die Kernel-Dokumentation weist auf einen gewissen Performance-Aufwand hin, wenn der JIT benutzt wird.",
+    "who": "Eine billige Vorsicht für fast alle. Hosts mit schwerer eBPF-Paketverarbeitung, denen jedes Bit Geschwindigkeit zählt, messen lieber vorher.",
+    "notice": "Meist nichts. eBPF-Programme können geringfügig langsamer laufen, was nur bei stark belasteten Netzwerk- oder Tracing-Setups auffällt.",
+    "related": [
+      "kernel.unprivileged-bpf"
+    ],
+    "keywords": [
+      "bpf_jit_harden",
+      "net.core.bpf_jit_harden 2",
+      "ebpf jit härten linux",
+      "bpf jit spraying",
+      "ebpf constant blinding"
+    ]
+  },
+  "kernel.ldisc-autoload": {
+    "why": "Eine TTY-Line-Discipline ist ein Stück Kernelcode, das Daten auf einem seriellen Terminal behandelt. Einige alte hatten Fehler, und ein gewöhnliches Programm konnte den Kernel mit der Anfrage TIOCSETD zum Laden bewegen und dann den Fehler ausnutzen. Automatisches Laden zu verbieten nimmt unprivilegierten Benutzern diesen Weg.",
+    "how": "Setzt dev.tty.ldisc_autoload auf 0. Eingebaute oder bereits geladene Line-Disciplinen funktionieren weiter, aber der Kernel lädt keine zusätzlichen mehr auf Anfrage eines Programms ohne die nötige Berechtigung.",
+    "who": "Fast alle Desktops und Server. Lassen Sie es aus, wenn Sie serielle Geräte nutzen, die das Laden eines solchen Moduls auf Abruf brauchen, etwa einige SLIP-, CAN-über-Seriell- oder Modem-Einrichtungen.",
+    "notice": "Meist nichts. Wenn ein seltenes Serielles Werkzeug mit einem Fehler über eine unbekannte Line-Discipline fehlschlägt, kann ein Administrator das passende Modul vorher von Hand laden.",
+    "related": [
+      "modules.net-protocols",
+      "kernel.userfaultfd"
+    ],
+    "keywords": [
+      "ldisc_autoload",
+      "dev.tty.ldisc_autoload 0",
+      "tty line discipline exploit",
+      "tiocsetd autoload linux",
+      "tty line discipline autoload deaktivieren"
+    ]
+  },
+  "kernel.userfaultfd": {
+    "why": "Der Systemaufruf userfaultfd lässt ein Programm Seitenfehler selbst behandeln. Angreifer haben ihn benutzt, um den Kernel zu einem exakten Moment anzuhalten und ein winziges Zeitfenster genug zu verbreitern, um ein Rennen in einem Fehler wie einem Use-after-free zu gewinnen. Unprivilegierten Benutzern die Kernel-Form dieses Aufrufs zu nehmen, erschwert viele solcher Exploits.",
+    "how": "Setzt vm.unprivileged_userfaultfd auf 0. Laut Kernel-Dokumentation können Benutzer ohne CAP_SYS_PTRACE userfaultfd dann nur für Fehler im Benutzermodus nutzen, mit dem Flag UFFD_USER_MODE_ONLY. Der Zugriff über /dev/userfaultfd lässt sich gesondert gewähren.",
+    "who": "Für fast jeden Desktop und Server in Ordnung. Prüfen Sie es, wenn Sie Live-Migration virtueller Maschinen, Checkpoint-und-Restore-Werkzeuge oder andere auf userfaultfd aufgebaute Software einsetzen.",
+    "notice": "Fast nie sichtbar. Software, die volles userfaultfd als normaler Benutzer braucht, kann mit einem Berechtigungsfehler fehlschlagen, bis ihr /dev/userfaultfd gewährt wird oder sie mit mehr Rechten läuft.",
+    "related": [
+      "kernel.unprivileged-bpf",
+      "kernel.ldisc-autoload"
+    ],
+    "keywords": [
+      "unprivileged_userfaultfd",
+      "vm.unprivileged_userfaultfd 0",
+      "userfaultfd exploit linux",
+      "userfaultfd deaktivieren",
+      "userfaultfd einschränken"
+    ]
+  },
+  "kernel.perf-events": {
+    "why": "Die Schnittstelle für Performance-Ereignisse erlaubt Programmen zu messen, was CPU und Kernel tun. Sie bringt eine große Menge Kernelcode in die Reichweite gewöhnlicher Benutzer und hatte viele Schwachstellen. Sie anzuziehen verringert, was ein lokaler Angreifer berühren kann.",
+    "how": "Setzt kernel.perf_event_paranoid auf 2. Nach der Kernel-Dokumentation können Benutzer ohne CAP_PERFMON dann den Kernel nicht profilen und keine rohen Tracepoints oder CPU-weiten Ereignisse nutzen, aber weiterhin ihre eigenen Programme im Userspace messen. Manche Distributionen ergänzen strengere Stufen.",
+    "who": "Gut für Desktops und Server, auf denen niemand Code profiliert. Viele Distributionen nutzen bereits 2 oder mehr. Entwickler, die perf auf dem Kernel oder systemweit einsetzen, sollten es lassen oder sudo benutzen.",
+    "notice": "perf record für Kernel- oder systemweite Samples schlägt mit einer Meldung fehl, die perf_event_paranoid nennt. Das Profilen des eigenen Programms im Userspace funktioniert auf Stufe 2 meist weiter.",
+    "related": [
+      "kernel.kptr-restrict",
+      "kernel.unprivileged-bpf",
+      "kernel.ptrace"
+    ],
+    "keywords": [
+      "perf_event_paranoid",
+      "kernel.perf_event_paranoid 2",
+      "perf permission denied linux",
+      "perf events einschränken",
+      "perf_event_paranoid sicherheit"
+    ]
+  },
+  "kernel.kexec": {
+    "why": "kexec lässt den laufenden Kernel einen anderen laden und anspringen, ohne über die Firmware zu gehen. Ein Angreifer, der bereits Administratorrechte hat, könnte damit einen vorbereiteten Kernel starten, der Ihre Sicherheitseinstellungen ignoriert oder seine Werkzeuge versteckt. Abschalten entfernt diesen Schritt.",
+    "how": "Setzt kernel.kexec_load_disabled auf 1 und deaktiviert damit die Systemaufrufe kexec_load und kexec_file_load. Die Kernel-Dokumentation sagt, dass der Wert nach dem Setzen auf 1 erst nach dem nächsten Neustart wieder 0 werden kann.",
+    "who": "Geeignet für Desktops und Server ohne kexec. Lassen Sie es aus, wenn Sie auf Crash-Aufzeichnung mit kdump, schnelle Neustarts über kexec oder Werkzeuge zur Kernel-Aktualisierung im Lauf vertrauen.",
+    "notice": "Befehle wie kexec -l schlagen mit einem Berechtigungsfehler fehl, und ein Crash-Kernel-Dienst, der nach der Änderung startet, lädt möglicherweise nicht. Nur ein Neustart macht es rückgängig.",
+    "related": [
+      "kernel.sysrq"
+    ],
+    "keywords": [
+      "kexec_load_disabled",
+      "kexec deaktivieren linux",
+      "kernel.kexec_load_disabled 1",
+      "kexec sicherheit",
+      "kdump kexec_load_disabled"
+    ]
+  },
+  "kernel.sysrq": {
+    "why": "Die magische SysRq-Kombination spricht direkt mit dem Kernel und funktioniert auch bei gesperrtem Bildschirm. Jeder an der Tastatur kann damit sofort neu starten, alle Prozesse töten oder andere Aktionen erzwingen, ohne sich anzumelden. Abschalten schließt diese Tastenkombination.",
+    "how": "Setzt kernel.sysrq auf 0 und schaltet damit alle per Tastatur aufgerufenen SysRq-Funktionen aus. Die Kernel-Dokumentation weist darauf hin, dass Schreiben in /proc/sysrq-trigger als Administrator weiter erlaubt bleibt, weil diese Einstellung nur die Tastatur betrifft.",
+    "who": "Nützlich für gemeinsam genutzte oder öffentliche Rechner und unbeaufsichtigte Laptops. Lassen Sie es an, wenn Ihnen die Notfallsequenz REISUB zur Rettung eines eingefrorenen Desktops wichtig ist. Manche ziehen einen Mittelwert vor, der nur Synchronisieren und Neustarten erlaubt.",
+    "notice": "Alt+SysRq-Kombinationen bewirken nichts, ein eingefrorener Rechner lässt sich also nur noch über den Netzschalter retten. Wenn die Notfalltasten nicht mehr reagieren, ist dies die Ursache.",
+    "related": [
+      "kernel.kexec"
+    ],
+    "keywords": [
+      "kernel.sysrq 0",
+      "magic sysrq deaktivieren linux",
+      "sysrq sicherheit",
+      "reisub deaktiviert",
+      "magic sysrq key risiko"
+    ]
+  },
+  "kernel.ptrace": {
+    "why": "ptrace ist der Aufruf, mit dem Debugger ein anderes laufendes Programm lesen und verändern. Ohne Grenzen kann Schadsoftware unter Ihrem Konto Ihren Browser, den SSH-Agenten oder den Passwortmanager anhängen und Geheimnisse aus deren Speicher ziehen. Die Kernel-Dokumentation benutzt genau dieses Szenario, um Yama zu erklären.",
+    "how": "Setzt kernel.yama.ptrace_scope auf 1 (eingeschränktes ptrace). Ein Prozess kann sich dann nur an eigene Nachfahren anhängen oder an einen Prozess, der ihn als erlaubten Debugger benannt hat. Modus 2 erlaubt es nur Administratoren, Modus 3 verbietet es ganz.",
+    "who": "Ein gesunder Standard für Desktops und Server. Entwickler, die Debugger an laufende Programme hängen, können sudo nutzen oder das Programm unter dem Debugger starten.",
+    "notice": "gdb -p oder strace -p auf einem bereits laufenden Programm schlägt mit ptrace: Operation not permitted fehl. Das Starten aus gdb oder strace heraus funktioniert weiter, ebenso sudo.",
+    "related": [
+      "kernel.perf-events",
+      "fs.suid-dumpable"
+    ],
+    "keywords": [
+      "ptrace_scope",
+      "kernel.yama.ptrace_scope 1",
+      "ptrace operation not permitted",
+      "yama ptrace linux",
+      "gdb attach operation not permitted",
+      "ptrace einschränken"
+    ]
+  },
+  "kernel.user-namespaces": {
+    "why": "User-Namespaces lassen ein gewöhnliches Programm innerhalb eines privaten Raums als Schein-Administrator auftreten. Das ist für Sandboxes nützlich, stellt aber auch viel privilegierten Kernelcode unprivilegierten Benutzern bereit, und viele lokale Rechteausweitungen haben dort begonnen. Abschalten verkleinert diese Angriffsfläche.",
+    "how": "Setzt user.max_user_namespaces auf 0, also kann niemand neue User-Namespaces anlegen. Programme, die bereits in einem laufen, funktionieren weiter, neue können keins mehr starten.",
+    "who": "Nur für abgeriegelte Maschinen, auf denen Sie kein Flatpak, keine rootless Container und keinen Sandbox-Browser nutzen. Für die meisten Desktops ist es ein Handel: Diese Sandboxes schützen auch Sie, und sie zu entfernen kann Sie unsicherer machen.",
+    "notice": "Flatpak-Apps schlagen mit einem bwrap-Fehler beim Anlegen eines Namespace fehl. Chromium und Firefox melden möglicherweise, dass ihre Sandbox fehlt. Rootless Container und viele AppImages starten nicht mehr.",
+    "related": [
+      "kernel.unprivileged-bpf",
+      "kernel.ptrace"
+    ],
+    "keywords": [
+      "max_user_namespaces",
+      "user.max_user_namespaces 0",
+      "user namespaces deaktivieren linux",
+      "bwrap no permissions to create new namespace",
+      "unprivileged user namespaces sicherheit"
+    ]
+  },
+  "fs.protected-files": {
+    "why": "In einem gemeinsam genutzten Ordner wie /tmp kann jeder Dateien anlegen. Ein Angreifer kann dort einen Link platzieren, der auf etwas Wichtiges zeigt, etwa eine Datei in Ihrem Home-Ordner, und warten, bis ein Skript oder privilegiertes Programm unter dem gewohnten Namen schreibt. Das Programm folgt dem Link und überschreibt das Ziel.",
+    "how": "Aktiviert vier Kernel-Schutzmechanismen: fs.protected_symlinks=1 und fs.protected_hardlinks=1 beschränken das Folgen und Anlegen von Links in Verzeichnissen mit Sticky-Bit, und fs.protected_fifos=2 und fs.protected_regular=2 hindern Programme daran, in solchen Ordnern eine Pipe oder Datei eines anderen Benutzers mit Anlegen zu öffnen.",
+    "who": "Für jeden geeignet. Viele Systeme aktivieren bereits das Meiste. Nur ausschalten, wenn ein altes Skript davon abhängt, Dateien eines anderen Benutzers in /tmp wiederzuverwenden.",
+    "notice": "Meist nichts. Ein Skript, das in eine Datei in /tmp schreibt, die ein anderer Benutzer angelegt hat, kann mit Permission denied fehlschlagen.",
+    "related": [
+      "mounts.tmp-noexec"
+    ],
+    "keywords": [
+      "protected_symlinks",
+      "fs.protected_regular 2",
+      "protected_hardlinks sysctl",
+      "/tmp symlink angriff linux",
+      "fs.protected_fifos"
+    ]
+  },
+  "fs.suid-dumpable": {
+    "why": "Wenn ein Programm mit zusätzlichen Rechten abstürzt, etwa sudo oder passwd, kann der Kernel dessen Speicher in eine Datei schreiben. Dieser Speicher kann Passwörter, Schlüssel oder Hashes enthalten, und eine Datei an einem lesbaren Ort übergibt sie jedem, der sie findet. Den Dump nicht zu schreiben stoppt dieses Leck.",
+    "how": "Setzt fs.suid_dumpable auf 0, das herkömmliche Verhalten: Prozesse, die ihre Rechteebene gewechselt haben oder nur ausführbar sind, werden nicht gedumpt. Die anderen Modi (1 und 2) erlauben Dumps absichtlich zum Debuggen, wobei Modus 1 laut Kernel-Dokumentation unsicher ist.",
+    "who": "Gut für jede Maschine, auf der keine setuid-Programme debuggt werden. Entwickler, die einem Absturz in einem setuid-Werkzeug nachgehen, können es zeitweise einschalten.",
+    "notice": "Im normalen Gebrauch nichts. Ein Absturz eines privilegierten Programms hinterlässt keine Core-Datei und keinen Bericht, was nur zählt, wenn Sie diesen Absturz untersuchen wollen.",
+    "related": [
+      "kernel.ptrace"
+    ],
+    "keywords": [
+      "suid_dumpable",
+      "fs.suid_dumpable 0",
+      "core dump setuid programme",
+      "core dumps privilegierter programme deaktivieren",
+      "suid_dumpable sicherheit"
+    ]
+  },
+  "net.tcp-syncookies": {
+    "why": "Eine SYN-Flut schickt enorme Mengen von Verbindungsanfragen und vollendet sie nie. Jede halboffene Verbindung belegt Speicher, der Server läuft voll und antwortet echten Besuchern nicht mehr. SYN-Cookies lassen die Maschine während der Flut weiter antworten.",
+    "how": "Setzt net.ipv4.tcp_syncookies auf 1. Wenn die Warteschlange halboffener Verbindungen überläuft, speichert der Kernel sie nicht mehr, sondern kodiert den nötigen Zustand in die Antwort, sodass die Flut keinen Speicher verzehrt.",
+    "who": "Alles, das TCP-Verbindungen annimmt: Server, Heimlabore, Laptops mit Diensten. Es greift nur unter Last, also gibt es wenig Grund, es auszulassen. Die meisten Distributionen aktivieren es bereits.",
+    "notice": "Nichts, da es nur bei Überlast zählt. Während einer Flut können auf den betroffenen Verbindungen einige optionale TCP-Funktionen fehlen.",
+    "related": [
+      "net.tcp-rfc1337"
+    ],
+    "keywords": [
+      "tcp_syncookies",
+      "net.ipv4.tcp_syncookies 1",
+      "syn flood schutz linux",
+      "syn cookies aktivieren",
+      "sysctl ddos linux"
+    ]
+  },
+  "net.tcp-rfc1337": {
+    "why": "Nach dem Schließen einer TCP-Verbindung hält der Kernel ihren Eintrag kurz in einem Zustand namens TIME-WAIT, damit verirrte Pakete nicht für eine neue Verbindung gehalten werden. Ein gefälschtes Reset-Paket in dieser Zeit kann den Eintrag vorzeitig zerstören, was Verwirrung und Übernahme Tür und Tor öffnet. Das nennt man TIME-WAIT assassination.",
+    "how": "Setzt net.ipv4.tcp_rfc1337 auf 1. Reset-Pakete (RST), die für einen Socket im Zustand TIME-WAIT eintreffen, werden dann verworfen, statt den Zustand vorzeitig zu beenden.",
+    "who": "Für nahezu jeden Rechner in Ordnung. Es weicht etwas vom strengen TCP-Verhalten in der Weise ab, die RFC 1337 vorschlägt, daher möchte ein Team mit ungewöhnlicher Netzwerkhardware es zuerst testen.",
+    "notice": "Nichts im Alltag. Die Verbindung verhält sich wie immer, auch mit eingeschalteter Schutz, und kein Netzwerkwerkzeug hört deswegen auf zu funktionieren.",
+    "related": [
+      "net.tcp-syncookies",
+      "net.tcp-sack"
+    ],
+    "keywords": [
+      "tcp_rfc1337",
+      "net.ipv4.tcp_rfc1337 1",
+      "time-wait assassination",
+      "tcp rst time-wait sysctl",
+      "rfc1337 linux"
+    ]
+  },
+  "net.redirects": {
+    "why": "Ein ICMP-Redirect ist die Nachricht eines Routers, für jenes Ziel diesen anderen Router zu benutzen. In einem geteilten WLAN kann ein Angreifer eine gefälschte schicken, sodass Ihr Verkehr über seine Maschine läuft, wo er belauscht oder verändert werden kann. Redirects abzuweisen hält Ihre Routen in Ihrer Hand.",
+    "how": "Setzt accept_redirects und secure_redirects für IPv4 auf 0 und accept_redirects für IPv6 auf 0, in den Schnittstellengruppen all und default. Zudem setzt es send_redirects auf 0, damit dieser Rechner selbst keine Redirects an andere schickt.",
+    "who": "Richtig für Desktops, Laptops und die meisten Server. Eine Maschine, die als Router dient, möchte Redirects vielleicht weitersenden, und manche kleinen Netze verlassen sich darauf.",
+    "notice": "Nichts in gewöhnlichen Netzen. Wenn Ihr Rechner nicht der Router des Netzes ist, merkt niemand den Unterschied, die übrigen Geräte ebenso wenig.",
+    "related": [
+      "net.source-routing",
+      "net.rp-filter",
+      "net.ipv6-router-adverts"
+    ],
+    "keywords": [
+      "accept_redirects",
+      "icmp redirects deaktivieren linux",
+      "net.ipv4.conf.all.accept_redirects 0",
+      "send_redirects",
+      "icmp redirect man in the middle"
+    ]
+  },
+  "net.source-routing": {
+    "why": "Source routing lässt dem Absender eines Pakets den Weg diktieren. Ein Angreifer kann damit Verkehr durch eine von ihm kontrollierte Maschine ziehen oder Regeln umgehen, die darauf beruhen, woher Pakete erwartet werden. Fast kein legitimes Netz nutzt es heute.",
+    "how": "Setzt accept_source_route für IPv4 und IPv6 in den Schnittstellengruppen all und default auf 0. Pakete, die ihre eigene Route mitführen, werden dann verworfen.",
+    "who": "Für praktisch jeden geeignet. Nur für Netztests oder Labore ausschalten, die bewusst Route-vorbestimmte Pakete nutzen.",
+    "notice": "In gewöhnlichen Netzen nichts. Nur besondere Diagnosewerkzeuge, die Source routing nutzen, sind betroffen.",
+    "related": [
+      "net.redirects",
+      "net.rp-filter"
+    ],
+    "keywords": [
+      "accept_source_route",
+      "source routing deaktivieren linux",
+      "net.ipv4.conf.all.accept_source_route 0",
+      "ip source route angriff",
+      "sysctl source routing ipv6"
+    ]
+  },
+  "net.rp-filter": {
+    "why": "Angreifer setzen oft eine falsche Absenderadresse auf Pakete, um sich zu verstecken oder für eine vertrauenswürdige Maschine zu gelten. Die Reverse-Path-Filterung prüft, ob eine Antwort an diese Adresse über denselben Netzanschluss hinausginge, auf dem das Paket ankam. Würde sie das nicht, wird das Paket verworfen.",
+    "how": "Setzt net.ipv4.conf.all.rp_filter und net.ipv4.conf.default.rp_filter auf 1, den strengen Modus. Ein Paket wird nur akzeptiert, wenn die beste Route zurück zu seiner Quelle über die Schnittstelle führt, auf der es ankam.",
+    "who": "Gut für gewöhnliche Rechner mit einer Verbindung und einfache Server. Lassen Sie es aus oder nutzen Sie den losen Modus (2) auf Maschinen mit mehreren Netzanschlüssen, Policy-Routing oder manchen VPN-Einrichtungen.",
+    "notice": "Verbindungen, die über einen Netzweg funktionieren, schlagen über einen anderen fehl, oder ein VPN überträgt keinen Verkehr mehr. Verworfene Pakete zählt nstat als IPReversePathFilter, was auf diese Einstellung weist.",
+    "related": [
+      "net.redirects",
+      "net.source-routing"
+    ],
+    "keywords": [
+      "rp_filter",
+      "reverse path filtering linux",
+      "net.ipv4.conf.all.rp_filter 1",
+      "ip spoofing schutz sysctl",
+      "rp_filter vpn problem"
+    ]
+  },
+  "net.ipv6-router-adverts": {
+    "why": "In einem IPv6-Netz kündigen sich Router mit Router Advertisements an, und Ihr Rechner glaubt ihnen. Ein böswilliges Gerät im selben Netz kann eigene senden und Ihr Standard-Gateway werden, sich also zwischen Sie und das Internet setzen. Die Ankündigungen zu ignorieren schließt diesen Weg.",
+    "how": "Setzt net.ipv6.conf.all.accept_ra und net.ipv6.conf.default.accept_ra auf 0, der Kernel ignoriert dann Router Advertisements. Ohne sie kann er IPv6-Adressen und Routen nicht automatisch einrichten.",
+    "who": "Nur für Netze, in denen Sie IPv6 von Hand setzen, oder in denen Sie kein IPv6 nutzen. In normalen Heim- und BüroNetzen, die Adressen so vergeben, lassen Sie es aus.",
+    "notice": "IPv6 funktioniert nicht mehr: ip -6 addr zeigt nur eine Link-lokale Adresse, und Seiten, die IPv6 brauchen, können unerreichbar sein. IPv4 läuft meist weiter.",
+    "related": [
+      "net.redirects"
+    ],
+    "keywords": [
+      "accept_ra",
+      "ipv6 router advertisement angriff",
+      "net.ipv6.conf.all.accept_ra 0",
+      "ipv6 router advertisements deaktivieren",
+      "keine ipv6 adresse nach sysctl"
+    ]
+  },
+  "net.tcp-sack": {
+    "why": "Selektive Bestätigungen lassen TCP genau melden, welche Teile ankamen, sodass nur fehlende erneut gesendet werden. Der Code dafür hatte schwere Fehler, und 2019 ließ eine als SACK Panic bekannte Schwachstelle einen entfernten Angreifer eine Linux-Maschine mit passend gebauten Paketen abstürzen. SACK auszuschalten entfernt diese Art Ziel.",
+    "how": "Setzt net.ipv4.tcp_sack auf 0. TCP-Verbindungen fallen auf eine einfachere Art zurück, verlorene Pakete wiederzuholen, ohne selektive Bestätigungen.",
+    "who": "Eine Wahl der Verteidigung in der Tiefe für Server mit nicht vertrauenswürdigem Verkehr. Bekannte Fehler sind in aktuellen Kerneln behoben, daher ist für einen Desktop der Geschwindigkeitsverlust oft das schlechtere Geschäft. Lassen Sie es an auf langsamen oder verlustreichen Verbindungen.",
+    "notice": "Downloads und Uploads können auf WLAN-, Mobil- oder Langstreckenverbindungen mit Paketverlust langsamer sein. In sauberen kabelgebundenen Netzen merken Sie womöglich nichts.",
+    "related": [
+      "net.tcp-syncookies",
+      "net.tcp-rfc1337"
+    ],
+    "keywords": [
+      "tcp_sack",
+      "net.ipv4.tcp_sack 0",
+      "tcp sack deaktivieren linux",
+      "sack panic cve-2019-11477",
+      "selective acknowledgements sicherheit"
+    ]
+  },
+  "modules.net-protocols": {
+    "why": "Linux kann Treiber für alte oder seltene Netzwerkprotokolle wie DCCP, SCTP, AX.25 und ATM in dem Moment laden, in dem ein Programm einen Socket dieses Typs öffnet, ganz ohne Administrator. Mehrere davon hatten schwere Fehler. 2017 etwa verschaffte ein Fehler in DCCP (CVE-2017-6074) einem lokalen Benutzer root, indem der Kernel das Modul lud.",
+    "how": "Fügt eine Modprobe-Konfiguration hinzu, die das Laden jedes Moduls der Gruppe net-protocols fehlschlagen lässt. Da der Kernel modprobe fragt, wenn ein unbekanntes Protokoll verlangt wird, kann ein gewöhnliches Programm das Laden nicht mehr auslösen.",
+    "who": "Fast jeder Desktop und Server. Lassen Sie es aus, wenn Sie SCTP nutzen (einige Telekom- und WebRTC-Software), CAN-Bus, Amateurfunknetz oder Ähnliches.",
+    "notice": "Fast nie. Ein Programm, das eines dieser Protokolle braucht, scheitert beim Öffnen des Sockets mit etwa Protocol not supported oder Address family not supported.",
+    "related": [
+      "modules.rare-filesystems",
+      "kernel.ldisc-autoload"
+    ],
+    "keywords": [
+      "blacklist dccp sctp linux",
+      "obskure netzwerkprotokolle deaktivieren",
+      "cve-2017-6074 dccp",
+      "modprobe install dccp /bin/false",
+      "kernel modul autoload deaktivieren"
+    ]
+  },
+  "modules.rare-filesystems": {
+    "why": "Ein USB-Stick oder ein Disk-Image kann gebaut sein, um einen Fehler im Code auszulösen, der sein Dateisystem liest. Der Kernel enthält viele Treiber für alte oder spezialisierte Formate, und die wenig genutzten werden selten geprüft. Wenn der Treiber nicht laden kann, erreicht eine präparierte Disk ihn nicht.",
+    "how": "Fügt eine Modprobe-Konfiguration hinzu, die das Laden der Module der Gruppe rare-filesystems sperrt. Ein Mounten solcher Datenträger scheitert dann, weil der Kernel den Dateisystemtreiber nicht laden kann.",
+    "who": "Gut für alle, die nur gängige Formate nutzen wie ext4, btrfs, xfs, FAT, exFAT und NTFS. Lassen Sie es aus, wenn Sie DVDs oder UDF-Images, alte Mac-Datenträger oder Embedded-Abbilder lesen.",
+    "notice": "Das Mounten eines gesperrten Formats scheitert mit etwa unknown filesystem type. Optische Datenträger und UDF-Abbilder zeigen es am ehesten.",
+    "related": [
+      "modules.network-filesystems",
+      "modules.net-protocols"
+    ],
+    "keywords": [
+      "blacklist udf modul linux",
+      "seltene dateisysteme deaktivieren linux",
+      "unknown filesystem type udf",
+      "modprobe install hfs /bin/false",
+      "cramfs hfsplus blockieren"
+    ]
+  },
+  "modules.network-filesystems": {
+    "why": "Eine Netzwerkfreigabe einzubinden heißt, dass der Kernel mit einem entfernten Server spricht, und zwar mit Code, der die vom Server gesendeten Daten auswertet. Ein böswilliger oder kompromittierter Server kann versuchen, Fehler in diesem Code auszunutzen. Wenn Sie solche Freigaben nie nutzen, brauchen Sie diesen Code gar nicht geladen.",
+    "how": "Fügt eine Modprobe-Konfiguration hinzu, die die Module der Gruppe network-filesystems sperrt, welche die NFS- und SMB/CIFS-Clients abdecken. Versuche, solche Freigaben zu mounten, scheitern, weil der Treiber nicht geladen werden kann.",
+    "who": "Nur wenn Sie nie NFS- oder SMB-Freigaben mounten, was für viele Laptops gilt. Lassen Sie es aus, wenn Sie ein NAS, einen Firmen-Dateiserver oder ein NFS-Heimatverzeichnis nutzen.",
+    "notice": "Das Mounten einer Freigabe scheitert mit etwa unknown filesystem type nfs oder cifs. Wenn eine gemountete Freigabe nach dem Start fehlt, ist dies eine wahrscheinliche Ursache.",
+    "related": [
+      "modules.rare-filesystems"
+    ],
+    "keywords": [
+      "nfs cifs deaktivieren linux",
+      "smb nfs kernel module blockieren",
+      "mount nfs unknown filesystem type",
+      "blacklist cifs modul",
+      "modprobe install nfs /bin/true"
+    ]
+  },
+  "modules.bluetooth": {
+    "why": "Bluetooth hat eine lange Geschichte von Schwachstellen, manche von jemandem in der Nähe ausnutzbar, ohne Ihren Rechner zu berühren. Wenn Sie es nie benutzen, sind das Funkmodul und der Kernelcode, der damit spricht, ein Nutzen ohne Risiko. Den Treiber zu sperren entfernt beides.",
+    "how": "Fügt eine Modprobe-Konfiguration hinzu, die das Laden der Module der Gruppe bluetooth sperrt, des Kernstapels und des verbreiteten USB-Adaptertreibers (btusb). Ohne sie kann der Adapter nicht starten.",
+    "who": "Für Desktops und Server ohne Nutzen für Bluetooth. Lassen Sie es aus, wenn Sie kabellose Tastaturen, Mäuse, Kopfhörer oder Controller benutzen oder Dateien vom Telefon übertragen.",
+    "notice": "Der Bluetooth-Schalter verschwindet aus den Einstellungen, und bluetoothctl meldet keinen Controller. Bluetooth-Tastaturen, Mäuse und Kopfhörer verbinden sich nicht.",
+    "related": [
+      "modules.net-protocols"
+    ],
+    "keywords": [
+      "bluetooth deaktivieren linux sicherheit",
+      "blacklist btusb bluetooth",
+      "bluetooth no default controller",
+      "kernel modul bluetooth abschalten",
+      "modprobe install bluetooth /bin/false"
+    ]
+  },
+  "modules.vivid": {
+    "why": "Der Treiber vivid erzeugt fake Video-Geräte zum Testen von Videosoftware und hat auf einem normalen Rechner keinen Nutzen. Fehler darin haben früher Rechteausweitungen erlaubt. Ist er nicht geladen, können diese Fehler nicht genutzt werden. Da er ohnehin meist nicht geladen ist, ist der Gewinn klein, der Aufwand null.",
+    "how": "Fügt eine Modprobe-Konfiguration hinzu, die das Laden des Moduls vivid sperrt. Jeder Versuch, es zu laden, durch einen Administrator oder einen Angreifer, der modprobe ausführen kann, scheitert.",
+    "who": "Alle außer Entwickler, die Videoaufnahme- oder Kamerasoftware mit virtuellen Geräten testen und vivid brauchen.",
+    "notice": "Für normale Benutzer nichts. Ein Entwickler, der vivid zu laden versucht, sieht modprobe scheitern, und keine virtuellen Testkameras erscheinen.",
+    "related": [
+      "modules.net-protocols"
+    ],
+    "keywords": [
+      "vivid kernel modul",
+      "blacklist vivid linux",
+      "vivid treiber rechteausweitung",
+      "vivid v4l2 test treiber deaktivieren",
+      "modprobe install vivid /bin/false"
+    ]
+  },
+  "mounts.tmp-noexec": {
+    "why": "Nach einem Einbruch laden Schadsoftware und Exploit-Skripte oft ein Programm nach /tmp herunter, weil dort jeder schreiben darf, und führen es aus. /tmp so zu mounten, dass nichts daraus ausgeführt werden kann, bricht diesen Schritt und zwingt den Angreifer, einen anderen Ort zu suchen.",
+    "how": "Setzt die Mount-Option noexec auf /tmp: Der Kernel verweigert es, dort gespeicherte Programme auszuführen und Dateien von dort als ausführbaren Code abzubilden. Es hindert einen Interpreter nicht, ein Skript zu lesen, daher läuft bash /tmp/script.sh weiterhin.",
+    "who": "Passt zu Servern und aufgeräumten Desktops, auf denen Software aus dem Paketmanager kommt. Entwickler und alle, die Software bauen oder Installer ausführen, sollten es sich zweimal überlegen, denn vieles Werkzeug erwartet, Dinge aus /tmp auszuführen.",
+    "notice": "Programme scheitern mit Permission denied oder failed to map segment from shared object. Installer, Build-Werkzeuge, Paket-Skripte und manche Java- oder Python-Module, die Code nach /tmp auspacken, sind die üblichen Betroffenen.",
+    "related": [
+      "fs.protected-files"
+    ],
+    "keywords": [
+      "/tmp noexec",
+      "mount tmp noexec linux",
+      "permission denied /tmp noexec",
+      "failed to map segment from shared object",
+      "sichere /tmp mount optionen"
+    ]
+  }
+}

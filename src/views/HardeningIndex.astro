@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { t } from '../i18n/ui';
+import { href, type Locale } from '../i18n/locales';
+import { AREAS, CATALOG, said } from '../lib/content';
+import { url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const areas = AREAS.filter((a) => CATALOG.items.some((i) => i.area === a));
+const graph = [
+  {
+    '@type': 'CollectionPage',
+    name: t(locale, 'hardening.title'),
+    url: url(locale, 'hardening'),
+    inLanguage: locale,
+    hasPart: CATALOG.items.map((i) => ({ '@type': 'WebPage', name: said(i.title, locale), url: url(locale, `hardening/${i.id}`) })),
+  },
+];
+---
+
+<Base locale={locale} path="hardening" title={t(locale, 'hardening.title')} description={t(locale, 'hardening.description')} graph={graph} current="hardening">
+  <Breadcrumbs locale={locale} trail={[{ name: t(locale, 'nav.home'), href: href(locale) }, { name: t(locale, 'nav.hardening') }]} />
+  <div class="wrap prose">
+    <h1>{t(locale, 'hardening.title')}</h1>
+    <p class="read">{t(locale, 'hardening.intro')}</p>
+    {areas.map((area) => (
+      <section>
+        <h2 id={area}>{t(locale, `hardening.area.${area}`)}</h2>
+        <ul class="grid">
+          {CATALOG.items.filter((i) => i.area === area).map((item) => (
+            <li class="card link">
+              <h3><a class="cover" href={href(locale, `hardening/${item.id}`)}>{said(item.title, locale)}</a></h3>
+              <p>{said(item.summary, locale)}</p>
+              <p><span class={`risk ${item.risk}`}>{t(locale, `risk.${item.risk}`)}</span></p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>

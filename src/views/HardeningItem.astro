@@ -1,0 +1,124 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { t } from '../i18n/ui';
+import { href, type Locale } from '../i18n/locales';
+import { CATALOG, explanation, MODULE_GROUPS, said, type Item } from '../lib/content';
+import { url } from '../lib/seo';
+import { shot } from '../lib/shots';
+
+interface Props {
+  locale: Locale;
+  item: Item;
+}
+const { locale, item } = Astro.props;
+const text = explanation(locale, item.id);
+const title = said(item.title, locale);
+const summary = said(item.summary, locale);
+const breaks = item.breaks ? said(item.breaks, locale) : '';
+const related = (text?.related ?? []).map((id) => CATALOG.items.find((i) => i.id === id)).filter(Boolean) as Item[];
+const slugName = item.id.replace(/\./g, '-');
+
+// The commands, from what the catalog says the setting is.
+const probe = item.probe;
+let checkCmd = '';
+let applyNow = '';
+let persist = '';
+let kind: 'sysctl' | 'modules' | 'mount' = 'sysctl';
+let atLeast = false;
+if (probe.kind === 'sysctl') {
+  kind = 'sysctl';
+  checkCmd = probe.keys.map((k) => `sysctl ${k.key}`).join('\n');
+  applyNow = probe.keys.map((k) => `sudo sysctl -w ${k.key}=${k.want}`).join('\n');
+  persist = `sudo tee /etc/sysctl.d/90-${slugName}.conf <<'EOF'\n${probe.keys.map((k) => `${k.key} = ${k.want}`).join('\n')}\nEOF\nsudo sysctl --system`;
+  atLeast = probe.keys.some((k) => k.at_least);
+} else if (probe.kind === 'modules') {
+  kind = 'modules';
+  const group = MODULE_GROUPS[probe.group] ?? { modules: [], command: '/bin/false' };
+  checkCmd = `lsmod | grep -E '^(${group.modules.join('|')}) '`;
+  persist = `sudo tee /etc/modprobe.d/90-${slugName}.conf <<'EOF'\n${group.modules.map((m) => `install ${m} ${group.command}`).join('\n')}\nEOF`;
+} else {
+  kind = 'mount';
+  checkCmd = `findmnt -no OPTIONS ${probe.path}`;
+  persist = `# /etc/fstab, add "${probe.option}" to the options of ${probe.path}, for example:\ntmpfs  ${probe.path}  tmpfs  defaults,${probe.option}  0 0\nsudo mount -o remount ${probe.path}`;
+}
+const path = `hardening/${item.id}`;
+const graph = [
+  {
+    '@type': 'TechArticle',
+    headline: title,
+    description: summary,
+    inLanguage: locale,
+    url: url(locale, path),
+    dateModified: CATALOG.reviewed,
+    keywords: (text?.keywords ?? []).join(', '),
+    author: { '@type': 'Organization', name: 'IbexWall' },
+    isPartOf: { '@type': 'CollectionPage', name: t(locale, 'hardening.title'), url: url(locale, 'hardening') },
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t(locale, 'nav.home'), item: url(locale) },
+      { '@type': 'ListItem', position: 2, name: t(locale, 'nav.hardening'), item: url(locale, 'hardening') },
+      { '@type': 'ListItem', position: 3, name: title, item: url(locale, path) },
+    ],
+  },
+];
+---
+
+<Base locale={locale} path={path} title={title} description={summary} graph={graph} type="article" current="hardening">
+  <Breadcrumbs locale={locale} trail={[{ name: t(locale, 'nav.home'), href: href(locale) }, { name: t(locale, 'nav.hardening'), href: href(locale, 'hardening') }, { name: title }]} />
+  <article class="wrap prose">
+    <h1>{title}</h1>
+    <div class="meta">
+      <span class={`risk ${item.risk}`}>{t(locale, `risk.${item.risk}`)}</span>
+      <span>{t(locale, item.recommended ? 'recommended.yes' : 'recommended.no')}</span>
+      <span>{t(locale, 'hp.reviewed')}: {CATALOG.reviewed}</span>
+    </div>
+    <p class="read" style="font-size:1.15rem">{summary}</p>
+
+    {text ? <section><h2>{t(locale, 'hp.why')}</h2><p>{text.why}</p></section> : null}
+    {text ? <section><h2>{t(locale, 'hp.how')}</h2><p>{text.how}</p></section> : null}
+    {text ? <section><h2>{t(locale, 'hp.who')}</h2><p>{text.who}</p></section> : null}
+    {text ? <section><h2>{t(locale, 'hp.notice')}</h2><p>{text.notice}</p></section> : null}
+    {breaks ? <aside class="callout warn"><h2>{t(locale, 'hp.breaks')}</h2><p>{breaks}</p></aside> : null}
+
+    <section>
+      <h2>{t(locale, 'hp.check')}</h2>
+      <p>{t(locale, `hp.${kind}.check`)}</p>
+      <pre><code>{checkCmd}</code></pre>
+      {atLeast ? <p class="note">{t(locale, 'hp.atleast')}</p> : null}
+    </section>
+    <section>
+      <h2>{t(locale, 'hp.apply')}</h2>
+      {kind === 'sysctl' ? <><p>{t(locale, 'hp.sysctl.apply')}</p><pre><code>{applyNow}</code></pre></> : null}
+      <p>{t(locale, kind === 'sysctl' ? 'hp.sysctl.persist' : `hp.${kind}.apply`)}</p>
+      <pre><code>{persist}</code></pre>
+    </section>
+    <section>
+      <h2>{t(locale, 'hp.undo')}</h2>
+      <p>{t(locale, `hp.${kind}.undo`)}</p>
+    </section>
+
+    <aside class="callout">
+      <h2>{t(locale, 'hp.ibex')}</h2>
+      <p>{t(locale, 'hp.ibex.text')}</p>
+      <figure class="shot" style="margin:1rem 0"><img src={shot(locale, 'hardening')} alt={t(locale, 'shot.hardening')} width="1280" height="800" loading="lazy" /></figure>
+      <p><a class="btn" href={href(locale, 'download')}>{t(locale, 'hp.ibex.cta')}</a></p>
+    </aside>
+
+    {related.length ? (
+      <section>
+        <h2>{t(locale, 'hp.related')}</h2>
+        <ul>{related.map((r) => <li><a href={href(locale, `hardening/${r.id}`)}>{said(r.title, locale)}</a></li>)}</ul>
+      </section>
+    ) : null}
+
+    <section>
+      <h2>{t(locale, 'hp.sources')}</h2>
+      <dl class="sources">
+        {item.sources.map((s) => <><dt><a href={s.url} rel="noopener">{s.name}</a></dt><dd>{s.section}</dd></>)}
+      </dl>
+    </section>
+  </article>
+</Base>

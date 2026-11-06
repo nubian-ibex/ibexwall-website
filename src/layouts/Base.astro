@@ -1,0 +1,132 @@
+---
+import '../styles/global.css';
+import { t } from '../i18n/ui';
+import { DOCS, href, LOCALES, NAMES, REPO, SITE, type Locale } from '../i18n/locales';
+import { alternates, jsonLd, organization, url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+  /** The page's path without the language, like `hardening/net.rp-filter`. */
+  path: string;
+  title: string;
+  description: string;
+  /** The languages the page really exists in; the others are not linked as alternates. */
+  available?: readonly Locale[];
+  graph?: object[];
+  type?: 'website' | 'article';
+  image?: string;
+  untranslated?: boolean;
+  current?: string;
+}
+const {
+  locale,
+  path,
+  title,
+  description,
+  available = LOCALES,
+  graph = [],
+  type = 'website',
+  image = '/og.png',
+  untranslated = false,
+  current = '',
+} = Astro.props;
+
+const canonical = url(locale, path);
+const links = alternates(path, available);
+const pageTitle = path === '' ? title : `${title} | IbexWall`;
+const nav: [string, string, string][] = [
+  ['hardening', t(locale, 'nav.hardening'), 'hardening'],
+  ['articles', t(locale, 'nav.articles'), 'articles'],
+  ['download', t(locale, 'nav.download'), 'download'],
+  ['security', t(locale, 'nav.security'), 'security'],
+];
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {untranslated ? <meta name="robots" content="noindex, follow" /> : null}
+    {links.map((l) => <link rel="alternate" hreflang={l.hreflang} href={l.href} />)}
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <meta name="theme-color" content="#1f7a55" />
+    <meta property="og:site_name" content="IbexWall" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={`${SITE}${image}`} />
+    <meta property="og:locale" content={locale.replace('-', '_')} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={jsonLd(organization, ...graph)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">{t(locale, 'nav.skip')}</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href={href(locale)}>
+          <img src="/logo.png" alt="" width="32" height="32" />
+          <span>IbexWall</span>
+        </a>
+        <nav class="nav" aria-label={t(locale, 'nav.main')}>
+          {nav.map(([key, label, to]) => (
+            <a href={href(locale, to)} aria-current={current === key ? 'page' : undefined}>{label}</a>
+          ))}
+          <a href={DOCS}>{t(locale, 'nav.docs')}</a>
+        </nav>
+        <details class="lang">
+          <summary aria-label={t(locale, 'nav.language')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>{NAMES[locale]}</span>
+          </summary>
+          <ul>
+            {LOCALES.filter((l) => available.includes(l)).map((l) => (
+              <li><a href={href(l, path)} lang={l} hreflang={l} aria-current={l === locale ? 'true' : undefined}>{NAMES[l]}</a></li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    </header>
+    <main id="main">
+      {untranslated ? (
+        <div class="wrap"><p class="callout warn">{t(locale, 'lang.untranslated')}</p></div>
+      ) : null}
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot">
+          <div>
+            <h2>{t(locale, 'footer.learn')}</h2>
+            <ul>
+              <li><a href={href(locale, 'hardening')}>{t(locale, 'nav.hardening')}</a></li>
+              <li><a href={href(locale, 'articles')}>{t(locale, 'nav.articles')}</a></li>
+              <li><a href={DOCS}>{t(locale, 'footer.docs')}</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>{t(locale, 'footer.project')}</h2>
+            <ul>
+              <li><a href={href(locale, 'download')}>{t(locale, 'nav.download')}</a></li>
+              <li><a href={href(locale, 'about')}>{t(locale, 'nav.about')}</a></li>
+              <li><a href={REPO}>{t(locale, 'footer.source')}</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>{t(locale, 'footer.legal')}</h2>
+            <ul>
+              <li><a href={href(locale, 'security')}>{t(locale, 'nav.security')}</a></li>
+              <li><a href={href(locale, 'privacy')}>{t(locale, 'nav.privacy')}</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="legal">{t(locale, 'footer.text')}</p>
+      </div>
+    </footer>
+  </body>
+</html>

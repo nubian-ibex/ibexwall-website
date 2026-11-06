@@ -1,0 +1,19 @@
+---
+import { t } from '../i18n/ui';
+import type { Locale } from '../i18n/locales';
+interface Props {
+  locale: Locale;
+  trail: { name: string; href?: string }[];
+}
+const { locale, trail } = Astro.props;
+---
+
+<nav class="crumbs wrap" aria-label={t(locale, 'breadcrumb.label')}>
+  <ol>
+    {trail.map((step, i) => (
+      <li>
+        {step.href && i < trail.length - 1 ? <a href={step.href}>{step.name}</a> : <span aria-current="page">{step.name}</span>}
+      </li>
+    ))}
+  </ol>
+</nav>

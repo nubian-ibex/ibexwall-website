@@ -1,0 +1,148 @@
+---
+import Base from '../layouts/Base.astro';
+import Faq from '../components/Faq.astro';
+import { t } from '../i18n/ui';
+import { DOCS, href, REPO, SITE, type Locale } from '../i18n/locales';
+import { articles, CATALOG, said } from '../lib/content';
+import { shot } from '../lib/shots';
+import { url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const features = ['score', 'hardening', 'firewall', 'dns', 'ai', 'plugins'];
+const promises = ['review', 'undo', 'private'];
+const trust = ['open', 'signed', 'tested', 'confined', 'languages'];
+const faq = [1, 2, 3, 4, 5].map((n) => ({ q: t(locale, `faq.${n}.q`), a: t(locale, `faq.${n}.a`) }));
+const latest = articles(locale).slice(0, 3);
+const graph = [
+  {
+    '@type': 'WebSite',
+    name: 'IbexWall',
+    url: url(locale),
+    inLanguage: locale,
+  },
+  {
+    '@type': 'SoftwareApplication',
+    name: 'IbexWall',
+    applicationCategory: 'SecurityApplication',
+    operatingSystem: 'Linux',
+    license: 'https://www.gnu.org/licenses/gpl-3.0.html',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    description: t(locale, 'home.description'),
+    url: SITE,
+    codeRepository: REPO,
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: faq.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+---
+
+<Base locale={locale} path="" title={t(locale, 'home.title')} description={t(locale, 'home.description')} graph={graph} current="home">
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>{t(locale, 'hero.title')}</h1>
+        <p class="lead">{t(locale, 'hero.sub')}</p>
+        <div class="cta">
+          <a class="btn" href={href(locale, 'download')}>{t(locale, 'hero.cta')}</a>
+          <a class="btn ghost" href={href(locale, 'hardening')}>{t(locale, 'hero.cta2')}</a>
+        </div>
+        <p class="note">{t(locale, 'hero.note')}</p>
+      </div>
+      <figure class="shot">
+        <img src={shot(locale, 'overview')} alt={t(locale, 'shot.overview')} width="1280" height="800" fetchpriority="high" />
+      </figure>
+    </div>
+  </section>
+
+  <section class="block alt">
+    <div class="wrap">
+      <h2>{t(locale, 'promises.title')}</h2>
+      <ul class="grid">
+        {promises.map((p) => (
+          <li class="card"><h3>{t(locale, `promise.${p}.title`)}</h3><p>{t(locale, `promise.${p}.text`)}</p></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>{t(locale, 'features.title')}</h2>
+      <ul class="grid">
+        {features.map((f) => (
+          <li class="card"><h3>{t(locale, `feature.${f}.title`)}</h3><p>{t(locale, `feature.${f}.text`)}</p></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block alt">
+    <div class="wrap">
+      <h2>{t(locale, 'how.title')}</h2>
+      <ol class="grid steps">
+        {[1, 2, 3, 4].map((n) => (
+          <li class="card"><h3>{t(locale, `how.${n}.title`)}</h3><p>{t(locale, `how.${n}.text`)}</p></li>
+        ))}
+      </ol>
+      <figure class="shot" style="margin-top:1.6rem">
+        <img src={shot(locale, 'hardening')} alt={t(locale, 'shot.hardening')} width="1280" height="800" loading="lazy" />
+      </figure>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>{t(locale, 'hardening.teaser.title')}</h2>
+      <p class="read">{t(locale, 'hardening.teaser.text')}</p>
+      <ul class="chips">
+        {CATALOG.items.slice(0, 8).map((item) => (
+          <li><a class="chip" href={href(locale, `hardening/${item.id}`)}>{said(item.title, locale)}</a></li>
+        ))}
+        <li><a class="chip" href={href(locale, 'hardening')}>{t(locale, 'hardening.title')}</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block alt">
+    <div class="wrap">
+      <h2>{t(locale, 'trust.title')}</h2>
+      <ul class="grid">
+        {trust.map((k) => (
+          <li class="card"><h3>{t(locale, `trust.${k}.title`)}</h3><p>{t(locale, `trust.${k}.text`)}</p></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>{t(locale, 'articles.teaser.title')}</h2>
+      <ul class="grid">
+        {latest.map((a) => (
+          <li class="card link">
+            <h3><a class="cover" href={href(locale, `articles/${a.slug}`)}>{a.title}</a></h3>
+            <p>{a.description}</p>
+          </li>
+        ))}
+      </ul>
+      <p><a href={href(locale, 'articles')}>{t(locale, 'articles.more')}</a></p>
+    </div>
+  </section>
+
+  <section class="block alt">
+    <div class="wrap read">
+      <h2>{t(locale, 'faq.title')}</h2>
+      <Faq items={faq} />
+      <p style="margin-top:1.4rem"><a href={DOCS}>{t(locale, 'footer.docs')}</a></p>
+    </div>
+  </section>
+</Base>

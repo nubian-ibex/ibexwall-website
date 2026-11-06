@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { t } from '../i18n/ui';
+import { href, LOCALES, type Locale } from '../i18n/locales';
+import { sitePage, type SitePage } from '../lib/content';
+import { url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+  page: SitePage;
+}
+const { locale, page } = Astro.props;
+const { Content } = page;
+const available = LOCALES.filter((l) => sitePage(l, page.slug)?.translated);
+const graph =
+  page.slug === 'download'
+    ? [
+        {
+          '@type': 'SoftwareApplication',
+          name: 'IbexWall',
+          applicationCategory: 'SecurityApplication',
+          operatingSystem: 'Linux',
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          url: url(locale, 'download'),
+        },
+      ]
+    : [{ '@type': 'WebPage', name: page.title, url: url(locale, page.slug), inLanguage: locale }];
+---
+
+<Base locale={locale} path={page.slug} title={page.title} description={page.description} graph={graph} available={available} untranslated={!page.translated} current={page.slug}>
+  <Breadcrumbs locale={locale} trail={[{ name: t(locale, 'nav.home'), href: href(locale) }, { name: page.title }]} />
+  <article class="wrap prose">
+    <h1>{page.title}</h1>
+    <Content />
+  </article>
+</Base>

@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import { t } from '../i18n/ui';
+import { href } from '../i18n/locales';
+const locale = 'en';
+---
+
+<Base locale={locale} path="404" title={t(locale, 'notfound.title')} description={t(locale, 'notfound.text')} available={['en']}>
+  <div class="wrap prose">
+    <h1>{t(locale, 'notfound.title')}</h1>
+    <p>{t(locale, 'notfound.text')}</p>
+    <p><a class="btn" href={href(locale)}>{t(locale, 'nav.home')}</a> <a class="btn ghost" href={href(locale, 'hardening')}>{t(locale, 'nav.hardening')}</a></p>
+  </div>
+</Base>

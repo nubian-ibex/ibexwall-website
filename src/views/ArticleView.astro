@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { t } from '../i18n/ui';
+import { href, LOCALES, type Locale } from '../i18n/locales';
+import { articles, CATALOG, said, type Article } from '../lib/content';
+import { url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+  article: Article & { translated: boolean };
+}
+const { locale, article } = Astro.props;
+const { Content } = article;
+const path = `articles/${article.slug}`;
+const available = LOCALES.filter((l) => articles(l).find((a) => a.slug === article.slug)?.translated);
+const related = article.related.map((id) => CATALOG.items.find((i) => i.id === id)).filter(Boolean);
+const graph = [
+  {
+    '@type': 'Article',
+    headline: article.title,
+    description: article.description,
+    inLanguage: locale,
+    datePublished: article.date,
+    dateModified: article.updated,
+    mainEntityOfPage: url(locale, path),
+    author: { '@type': 'Organization', name: 'IbexWall' },
+    publisher: { '@type': 'Organization', name: 'IbexWall' },
+    keywords: article.tags.join(', '),
+  },
+  ...(article.faq.length
+    ? [
+        {
+          '@type': 'FAQPage',
+          mainEntity: article.faq.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        },
+      ]
+    : []),
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t(locale, 'nav.home'), item: url(locale) },
+      { '@type': 'ListItem', position: 2, name: t(locale, 'nav.articles'), item: url(locale, 'articles') },
+      { '@type': 'ListItem', position: 3, name: article.title, item: url(locale, path) },
+    ],
+  },
+];
+---
+
+<Base locale={locale} path={path} title={article.title} description={article.description} graph={graph} type="article" available={available} untranslated={!article.translated} current="articles">
+  <Breadcrumbs locale={locale} trail={[{ name: t(locale, 'nav.home'), href: href(locale) }, { name: t(locale, 'nav.articles'), href: href(locale, 'articles') }, { name: article.title }]} />
+  <article class="wrap prose">
+    <h1>{article.title}</h1>
+    <div class="meta"><span>{t(locale, 'article.updated')}: {article.updated}</span></div>
+    <Content />
+    {related.length ? (
+      <section>
+        <h2>{t(locale, 'article.related')}</h2>
+        <ul>{related.map((r) => <li><a href={href(locale, `hardening/${r!.id}`)}>{said(r!.title, locale)}</a></li>)}</ul>
+      </section>
+    ) : null}
+    <aside class="callout">
+      <h2>{t(locale, 'article.cta.title')}</h2>
+      <p>{t(locale, 'article.cta.text')}</p>
+      <p><a class="btn" href={href(locale, 'download')}>{t(locale, 'hp.ibex.cta')}</a></p>
+    </aside>
+  </article>
+</Base>
