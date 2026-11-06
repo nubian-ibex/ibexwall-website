@@ -3,6 +3,10 @@
 
 # ibexwall-website
 
+[![CI](https://github.com/nubian-ibex/ibexwall-website/actions/workflows/ci.yml/badge.svg)](https://github.com/nubian-ibex/ibexwall-website/actions/workflows/ci.yml)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+
+
 The IbexWall website, <https://ibexwall.com>: the landing page, one page for
 each hardening setting, guides that answer what people search for, and the
 download, security, privacy and about pages. In English, Portuguese (Brazil),
