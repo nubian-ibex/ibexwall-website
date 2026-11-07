@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { t } from '../i18n/ui';
+import { href, type Locale } from '../i18n/locales';
+import { COMPLIANCE, said } from '../lib/content';
+import { url } from '../lib/seo';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const frameworks = COMPLIANCE.frameworks;
+const graph = [
+  {
+    '@type': 'CollectionPage',
+    name: t(locale, 'compliance.title'),
+    url: url(locale, 'compliance'),
+    inLanguage: locale,
+    hasPart: frameworks.map((f) => ({ '@type': 'WebPage', name: said(f.title, locale), url: url(locale, `compliance/${f.id}`) })),
+  },
+];
+---
+
+<Base locale={locale} path="compliance" title={t(locale, 'compliance.title')} description={t(locale, 'compliance.description')} graph={graph} current="compliance">
+  <Breadcrumbs locale={locale} trail={[{ name: t(locale, 'nav.home'), href: href(locale) }, { name: t(locale, 'nav.compliance') }]} />
+  <div class="wrap prose">
+    <h1>{t(locale, 'compliance.title')}</h1>
+    <p class="read">{t(locale, 'compliance.intro')}</p>
+    <aside class="callout">
+      <p>{t(locale, 'compliance.disclaimer')}</p>
+    </aside>
+    <ul class="grid">
+      {frameworks.map((f) => (
+        <li class="card link">
+          <h2><a class="cover" href={href(locale, `compliance/${f.id}`)}>{said(f.title, locale)}</a></h2>
+          <p class="version">{f.version}</p>
+          <p>{said(f.summary, locale)}</p>
+          <p class="meta">{t(locale, 'compliance.controls', { count: f.controls })}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>

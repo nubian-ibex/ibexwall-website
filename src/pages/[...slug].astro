@@ -1,9 +1,11 @@
 ---
 import { LOCALES, PREFIX, type Locale } from '../i18n/locales';
-import { articles, CATALOG, PAGE_SLUGS, sitePage } from '../lib/content';
+import { articles, CATALOG, COMPLIANCE, PAGE_SLUGS, sitePage } from '../lib/content';
 import Home from '../views/Home.astro';
 import HardeningIndex from '../views/HardeningIndex.astro';
 import HardeningItem from '../views/HardeningItem.astro';
+import ComplianceIndex from '../views/ComplianceIndex.astro';
+import ComplianceItem from '../views/ComplianceItem.astro';
 import ArticlesIndex from '../views/ArticlesIndex.astro';
 import ArticleView from '../views/ArticleView.astro';
 import TextPage from '../views/TextPage.astro';
@@ -18,6 +20,8 @@ export function getStaticPaths() {
     add(locale, '', { kind: 'home' });
     add(locale, 'hardening', { kind: 'hardening-index' });
     for (const item of CATALOG.items) add(locale, `hardening/${item.id}`, { kind: 'hardening-item', item });
+    add(locale, 'compliance', { kind: 'compliance-index' });
+    for (const item of COMPLIANCE.frameworks) add(locale, `compliance/${item.id}`, { kind: 'compliance-item', item });
     add(locale, 'articles', { kind: 'articles-index' });
     for (const article of articles(locale)) add(locale, `articles/${article.slug}`, { kind: 'article', article });
     for (const slug of PAGE_SLUGS) {
@@ -35,6 +39,8 @@ const { kind, locale } = props;
 {kind === 'home' && <Home locale={locale} />}
 {kind === 'hardening-index' && <HardeningIndex locale={locale} />}
 {kind === 'hardening-item' && <HardeningItem locale={locale} item={props.item} />}
+{kind === 'compliance-index' && <ComplianceIndex locale={locale} />}
+{kind === 'compliance-item' && <ComplianceItem locale={locale} item={props.item} />}
 {kind === 'articles-index' && <ArticlesIndex locale={locale} />}
 {kind === 'article' && <ArticleView locale={locale} article={props.article} />}
 {kind === 'page' && <TextPage locale={locale} page={props.page} />}

@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "reviewed": "2026-11-06",
+  "frameworks": [
+    {
+      "id": "ibexwall-baseline",
+      "title": {
+        "en": "IbexWall Baseline",
+        "pt-BR": "Base de referência do IbexWall",
+        "es": "Referencia IbexWall",
+        "fr": "Référentiel IbexWall",
+        "de": "IbexWall-Grundlage"
+      },
+      "version": "1.0",
+      "controls": 26,
+      "summary": {
+        "en": "IbexWall's own recommended set: 26 controls that map straight to the checks the product runs. No licensed text, no license question, and the default the app shows first.",
+        "pt-BR": "O conjunto recomendado do próprio IbexWall: 26 controles que mapeiam direto para as verificações que o produto executa. Sem texto licenciado, sem questão de licença, e o padrão que o aplicativo mostra primeiro.",
+        "es": "El conjunto recomendado del propio IbexWall: 26 controles que se corresponden directamente con las comprobaciones que ejecuta el producto. Sin texto licenciado, sin cuestión de licencia, y el predeterminado que la aplicación muestra primero.",
+        "fr": "L'ensemble recommandé d'IbexWall : 26 contrôles qui correspondent directement aux contrôles exécutés par le produit. Aucun texte sous licence, aucune question de licence, et le profil affiché en premier par l'application.",
+        "de": "Der eigene empfohlene Satz von IbexWall: 26 Kontrollen, die direkt den Prüfungen entsprechen, die das Produkt ausführt. Kein lizenzierter Text, keine Lizenzfrage, und der Standard, den die App zuerst zeigt."
+      },
+      "limits": {
+        "en": [
+          "Our own profile, not a published standard.",
+          "Two controls are attestation-only: backups and incident response, which software cannot prove."
+        ],
+        "pt-BR": [
+          "Perfil próprio, não uma norma publicada.",
+          "Dois controles são apenas de atestação: backups e resposta a incidentes, que o software não consegue provar."
+        ],
+        "es": [
+          "Perfil propio, no una norma publicada.",
+          "Dos controles son solo de atestación: las copias de seguridad y la respuesta a incidentes, que el software no puede probar."
+        ],
+        "fr": [
+          "Notre propre profil, pas une norme publiée.",
+          "Deux contrôles relèvent uniquement de l'attestation : les sauvegardes et la réponse aux incidents, que le logiciel ne peut pas prouver."
+        ],
+        "de": [
+          "Unser eigenes Profil, keine veröffentlichte Norm.",
+          "Zwei Kontrollen sind nur per Bestätigung: Backups und Incident Response, die Software nicht beweisen kann."
+        ]
+      }
+    },
+    {
+      "id": "lgpd",
+      "title": {
+        "en": "LGPD",
+        "pt-BR": "LGPD",
+        "es": "LGPD",
+        "fr": "LGPD",
+        "de": "LGPD"
+      },
+      "version": "Lei 13.709/2018",
+      "controls": 8,
+      "summary": {
+        "en": "Article 46, with art. 6 VII and art. 49. The law names no technical control, so this mapping is IbexWall's reading, stated plainly.",
+        "pt-BR": "Artigo 46, com o art. 6º, VII, e o art. 49. A lei não nomeia nenhum controle técnico, então este mapeamento é a leitura do IbexWall, declarada com clareza.",
+        "es": "Artículo 46, con el art. 6 VII y el art. 49. La ley no nombra ningún control técnico, así que esta correspondencia es la lectura de IbexWall, declarada con claridad.",
+        "fr": "Article 46, avec l'art. 6 VII et l'art. 49. La loi ne nomme aucun contrôle technique, ce mappage est donc la lecture d'IbexWall, énoncée clairement.",
+        "de": "Artikel 46, mit Art. 6 VII und Art. 49. Das Gesetz nennt keine technische Kontrolle, daher ist diese Zuordnung die Lesart von IbexWall, klar ausgewiesen."
+      },
+      "limits": {
+        "en": [
+          "The law names no technical control: ANPD may set minimum standards (art. 46, paragraph 1).",
+          "This is our reading, not an official one."
+        ],
+        "pt-BR": [
+          "A lei não nomeia nenhum controle técnico: a ANPD pode estabelecer padrões mínimos (art. 46, § 1º).",
+          "Esta é a nossa leitura, não uma leitura oficial."
+        ],
+        "es": [
+          "La ley no nombra ningún control técnico: la ANPD puede fijar estándares mínimos (art. 46, párrafo 1).",
+          "Esta es nuestra lectura, no una oficial."
+        ],
+        "fr": [
+          "La loi ne nomme aucun contrôle technique : l'ANPD peut fixer des normes minimales (art. 46, paragraphe 1).",
+          "C'est notre lecture, pas une lecture officielle."
+        ],
+        "de": [
+          "Das Gesetz nennt keine technische Kontrolle: die ANPD kann Mindeststandards festlegen (Art. 46, Absatz 1).",
+          "Dies ist unsere Lesart, keine offizielle."
+        ]
+      }
+    },
+    {
+      "id": "cmn-4893",
+      "title": {
+        "en": "CMN 4.893",
+        "pt-BR": "CMN 4.893",
+        "es": "CMN 4.893",
+        "fr": "CMN 4.893",
+        "de": "CMN 4.893"
+      },
+      "version": "4.893/2021, amended by 5.274/2025",
+      "controls": 14,
+      "summary": {
+        "en": "Article 3, paragraph 2, raised to 14 items by the 2025 amendment. The host gives evidence for nine automated items; the other five are organizational and carry an attestation control.",
+        "pt-BR": "Artigo 3º, § 2º, ampliado para 14 itens pela alteração de 2025. O computador fornece evidência para nove itens automatizados; os outros cinco são organizacionais e carregam um controle de atestação.",
+        "es": "Artículo 3, párrafo 2, ampliado a 14 puntos por la enmienda de 2025. El equipo aporta evidencia para nueve puntos automatizados; los otros cinco son organizativos y llevan un control de atestación.",
+        "fr": "Article 3, paragraphe 2, porté à 14 points par la modification de 2025. La machine apporte la preuve de neuf points automatisés ; les cinq autres sont organisationnels et portent un contrôle d'attestation.",
+        "de": "Artikel 3, Absatz 2, durch die Änderung von 2025 auf 14 Punkte erhöht. Der Rechner belegt neun automatisierte Punkte; die anderen fünf sind organisatorisch und tragen eine Bestätigungskontrolle."
+      },
+      "limits": {
+        "en": [
+          "The earlier specification predates the amendment, which raised the list to 14 items.",
+          "Five items are organizational (leak prevention, backups, certificates, interfaces, threat intelligence) and need a person's attestation."
+        ],
+        "pt-BR": [
+          "A especificação anterior é anterior à alteração, que elevou a lista para 14 itens.",
+          "Cinco itens são organizacionais (prevenção de vazamento, backups, certificados, interfaces, inteligência de ameaças) e precisam da atestação de uma pessoa."
+        ],
+        "es": [
+          "La especificación anterior es anterior a la enmienda, que elevó la lista a 14 puntos.",
+          "Cinco puntos son organizativos (prevención de fugas, copias, certificados, interfaces, inteligencia de amenazas) y requieren la atestación de una persona."
+        ],
+        "fr": [
+          "La spécification antérieure est antérieure à la modification, qui a porté la liste à 14 points.",
+          "Cinq points sont organisationnels (prévention des fuites, sauvegardes, certificats, interfaces, renseignement sur les menaces) et demandent l'attestation d'une personne."
+        ],
+        "de": [
+          "Die frühere Spezifikation liegt vor der Änderung, die die Liste auf 14 Punkte anhob.",
+          "Fünf Punkte sind organisatorisch (Leak-Prävention, Backups, Zertifikate, Schnittstellen, Bedrohungsaufklärung) und brauchen die Bestätigung einer Person."
+        ]
+      }
+    },
+    {
+      "id": "nist-800-53",
+      "title": {
+        "en": "NIST SP 800-53 Rev. 5",
+        "pt-BR": "NIST SP 800-53 Rev. 5",
+        "es": "NIST SP 800-53 Rev. 5",
+        "fr": "NIST SP 800-53 Rev. 5",
+        "de": "NIST SP 800-53 Rev. 5"
+      },
+      "version": "release 5.2.0",
+      "controls": 12,
+      "summary": {
+        "en": "The host subset of the control catalog. Public, and NIST publishes the catalogs in OSCAL.",
+        "pt-BR": "O subconjunto de computador do catálogo de controles. Público, e o NIST publica os catálogos em OSCAL.",
+        "es": "El subconjunto de equipo del catálogo de controles. Público, y el NIST publica los catálogos en OSCAL.",
+        "fr": "Le sous-ensemble machine du catalogue de contrôles. Public, et le NIST publie les catalogues en OSCAL.",
+        "de": "Die Rechner-Teilmenge des Kontrollkatalogs. Öffentlich, und das NIST veröffentlicht die Kataloge in OSCAL."
+      },
+      "limits": {
+        "en": [
+          "The host subset only: processes, people and scope are beyond what a local program can see."
+        ],
+        "pt-BR": [
+          "Apenas o subconjunto de computador: processos, pessoas e escopo estão além do que um programa local consegue ver."
+        ],
+        "es": [
+          "Solo el subconjunto de equipo: los procesos, las personas y el alcance quedan más allá de lo que un programa local puede ver."
+        ],
+        "fr": [
+          "Le sous-ensemble machine uniquement : les processus, les personnes et le périmètre dépassent ce qu'un programme local peut voir."
+        ],
+        "de": [
+          "Nur die Rechner-Teilmenge: Prozesse, Personen und Umfang liegen jenseits dessen, was ein lokales Programm sehen kann."
+        ]
+      }
+    },
+    {
+      "id": "nist-800-171",
+      "title": {
+        "en": "NIST SP 800-171 Rev. 3",
+        "pt-BR": "NIST SP 800-171 Rev. 3",
+        "es": "NIST SP 800-171 Rev. 3",
+        "fr": "NIST SP 800-171 Rev. 3",
+        "de": "NIST SP 800-171 Rev. 3"
+      },
+      "version": "Rev. 3",
+      "controls": 10,
+      "summary": {
+        "en": "The host subset of the requirements for protecting controlled unclassified information.",
+        "pt-BR": "O subconjunto de computador dos requisitos para proteger informação controlada não classificada.",
+        "es": "El subconjunto de equipo de los requisitos para proteger la información controlada no clasificada.",
+        "fr": "Le sous-ensemble machine des exigences de protection des informations contrôlées non classifiées.",
+        "de": "Die Rechner-Teilmenge der Anforderungen zum Schutz kontrollierter, nicht eingestufter Informationen."
+      },
+      "limits": {
+        "en": [
+          "The host subset only; a full assessment of an organization is the auditor's job."
+        ],
+        "pt-BR": [
+          "Apenas o subconjunto de computador; uma avaliação completa da organização é tarefa do auditor."
+        ],
+        "es": [
+          "Solo el subconjunto de equipo; la evaluación completa de una organización es tarea del auditor."
+        ],
+        "fr": [
+          "Le sous-ensemble machine uniquement ; l'évaluation complète d'une organisation est le travail de l'auditeur."
+        ],
+        "de": [
+          "Nur die Rechner-Teilmenge; die vollständige Bewertung einer Organisation ist Aufgabe des Prüfers."
+        ]
+      }
+    },
+    {
+      "id": "iso-27001",
+      "title": {
+        "en": "ISO/IEC 27001:2022",
+        "pt-BR": "ISO/IEC 27001:2022",
+        "es": "ISO/IEC 27001:2022",
+        "fr": "ISO/IEC 27001:2022",
+        "de": "ISO/IEC 27001:2022"
+      },
+      "version": "Annex A, theme 8",
+      "controls": 9,
+      "summary": {
+        "en": "Annex A theme 8 controls a host can show, by number and title only.",
+        "pt-BR": "Os controles do tema 8 do Anexo A que um computador consegue demonstrar, apenas por número e título.",
+        "es": "Los controles del tema 8 del Anexo A que un equipo puede demostrar, solo por número y título.",
+        "fr": "Les contrôles du thème 8 de l'Annexe A qu'une machine peut montrer, par numéro et titre uniquement.",
+        "de": "Die Kontrollen aus Thema 8 des Anhangs A, die ein Rechner zeigen kann, nur nach Nummer und Titel."
+      },
+      "limits": {
+        "en": [
+          "Number and title only: the control text is licensed and is not reproduced.",
+          "Theme 8 is the technological controls; the other themes are organizational and out of scope here."
+        ],
+        "pt-BR": [
+          "Apenas número e título: o texto do controle é licenciado e não é reproduzido.",
+          "O tema 8 são os controles tecnológicos; os demais temas são organizacionais e ficam fora do escopo aqui."
+        ],
+        "es": [
+          "Solo número y título: el texto del control está licenciado y no se reproduce.",
+          "El tema 8 son los controles tecnológicos; los demás temas son organizativos y quedan fuera del alcance aquí."
+        ],
+        "fr": [
+          "Numéro et titre uniquement : le texte du contrôle est sous licence et n'est pas reproduit.",
+          "Le thème 8 regroupe les contrôles technologiques ; les autres thèmes sont organisationnels et hors périmètre ici."
+        ],
+        "de": [
+          "Nur Nummer und Titel: Der Kontrolltext ist lizenziert und wird nicht wiedergegeben.",
+          "Thema 8 sind die technischen Kontrollen; die übrigen Themen sind organisatorisch und hier außerhalb des Rahmens."
+        ]
+      }
+    }
+  ]
+}

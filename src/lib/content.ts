@@ -4,6 +4,7 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import catalogFile from '../../data/hardening.json';
 import groupsFile from '../../data/module-groups.json';
+import complianceFile from '../../data/compliance.json';
 import { DEFAULT_LOCALE, LOCALES, type Locale } from '../i18n/locales';
 
 // The hardening catalog, as the app has it.
@@ -32,6 +33,27 @@ export interface Item {
 }
 export const CATALOG = catalogFile as unknown as { version: number; reviewed: string; items: Item[] };
 export const MODULE_GROUPS = groupsFile as Record<string, { modules: string[]; command: string }>;
+
+// The compliance frameworks, as the app's profiles describe them.
+
+export interface ComplianceFramework {
+  id: string;
+  title: Record<string, string>;
+  version: string;
+  controls: number;
+  summary: Record<string, string>;
+  limits: Record<string, string[]>;
+}
+export const COMPLIANCE = complianceFile as unknown as {
+  version: number;
+  reviewed: string;
+  frameworks: ComplianceFramework[];
+};
+
+/** The honest-limit bullets of a framework in one language, English as fallback. */
+export function limitsOf(framework: ComplianceFramework, locale: Locale): string[] {
+  return framework.limits[locale] ?? framework.limits.en ?? [];
+}
 
 /** What the pages add to the catalog, per language. */
 export interface Explain {
