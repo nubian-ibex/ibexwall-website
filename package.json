@@ -4,13 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "license": "GPL-3.0-or-later",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "sync": "node scripts/sync-from-app.mjs",
     "dev": "astro dev",
     "build": "node scripts/sync-from-app.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --test scripts/",
+    "test": "node scripts/check-content.mjs",
     "lighthouse": "node scripts/lighthouse.mjs"
   },
   "devDependencies": {
@@ -22,5 +23,10 @@
     "chrome-launcher": "^1.2.3",
     "lighthouse": "^13.6.0",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@emnapi/runtime": "1.11.3"
+    }
   }
 }
