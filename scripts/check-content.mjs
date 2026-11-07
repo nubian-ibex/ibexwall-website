@@ -98,9 +98,9 @@ for (const locale of locales) {
 for (const dir of ['src/i18n/ui', 'content/pages', 'content/articles', 'content/hardening']) {
   for (const file of readdirSync(join(site, dir), { withFileTypes: true, recursive: true })) {
     if (!file.isFile() || !/\.(json|md)$/.test(file.name)) continue;
-    const text = readFileSync(join(file.path, file.name), 'utf8');
+    const text = readFileSync(join(file.parentPath, file.name), 'utf8');
     const line = text.split('\n').findIndex((l) => l.includes('\u2014') || l.includes('\u2013'));
-    if (line >= 0) say(`${join(file.path, file.name)}:${line + 1}: an em or en dash`);
+    if (line >= 0) say(`${join(file.parentPath, file.name)}:${line + 1}: an em or en dash`);
   }
 }
 
