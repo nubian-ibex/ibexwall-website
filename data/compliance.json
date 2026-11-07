@@ -135,7 +135,7 @@
         "de": "NIST SP 800-53 Rev. 5"
       },
       "version": "release 5.2.0",
-      "controls": 12,
+      "controls": 11,
       "summary": {
         "en": "The host subset of the control catalog. Public, and NIST publishes the catalogs in OSCAL.",
         "pt-BR": "O subconjunto de computador do catálogo de controles. Público, e o NIST publica os catálogos em OSCAL.",
@@ -171,7 +171,7 @@
         "de": "NIST SP 800-171 Rev. 3"
       },
       "version": "Rev. 3",
-      "controls": 10,
+      "controls": 5,
       "summary": {
         "en": "The host subset of the requirements for protecting controlled unclassified information.",
         "pt-BR": "O subconjunto de computador dos requisitos para proteger informação controlada não classificada.",
