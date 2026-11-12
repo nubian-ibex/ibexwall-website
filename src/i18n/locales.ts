@@ -26,6 +26,8 @@ export const PREFIX: Record<Locale, string> = {
 
 export const SITE = 'https://ibexwall.com';
 export const DOCS = 'https://docs.ibexwall.com';
+/** The documentation of amivuln, served from this site by `functions/amivuln`. */
+export const AMIVULN = '/amivuln/';
 export const REPO = 'https://github.com/nubian-ibex/ibexwall';
 
 /** `/pt-br/hardening/` for ('pt-BR', 'hardening'); `/` for ('en', ''). */
