@@ -11,7 +11,7 @@
     "build": "node scripts/sync-from-app.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node scripts/check-content.mjs",
+    "test": "node scripts/check-content.mjs && node scripts/check-proxy.mjs",
     "lighthouse": "node scripts/lighthouse.mjs"
   },
   "devDependencies": {

@@ -221,6 +221,57 @@ pre span[style*='#6e7781'] {
   background: var(--primary-soft);
   color: var(--primary-strong);
 }
+/* Products menu: a details element, so it opens without any script and works
+   from the keyboard. */
+.products {
+  position: relative;
+}
+.products summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-2);
+}
+.products summary::-webkit-details-marker {
+  display: none;
+}
+.products summary:hover,
+.products[open] summary {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+.products[open] summary svg {
+  transform: rotate(180deg);
+}
+.products ul {
+  position: absolute;
+  left: 0;
+  z-index: 20;
+  margin: 0.35rem 0 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  min-width: 12rem;
+}
+.products li a {
+  display: block;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  min-height: 0;
+  color: var(--text);
+}
+.products li a:hover {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
 .lang {
   position: relative;
 }

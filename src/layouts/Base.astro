@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { t } from '../i18n/ui';
-import { DOCS, href, LOCALES, NAMES, REPO, SITE, type Locale } from '../i18n/locales';
+import { AMIVULN, DOCS, href, LOCALES, NAMES, REPO, SITE, type Locale } from '../i18n/locales';
 import { alternates, jsonLd, organization, url } from '../lib/seo';
 
 interface Props {
@@ -78,6 +78,15 @@ const nav: [string, string, string][] = [
           {nav.map(([key, label, to]) => (
             <a href={href(locale, to)} aria-current={current === key ? 'page' : undefined}>{label}</a>
           ))}
+          <details class="products">
+            <summary>
+              <span>{t(locale, 'nav.products')}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <ul>
+              <li><a href={AMIVULN}>AmIVuln</a></li>
+            </ul>
+          </details>
           <a href={DOCS}>{t(locale, 'nav.docs')}</a>
         </nav>
         <details class="lang">

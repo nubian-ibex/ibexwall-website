@@ -40,6 +40,16 @@ CI regenerates and fails if the committed files differ.
   why it matters, how it works, who should use it, what you may notice.
 - `content/_brief/product-facts.md`: the facts everything here is written from.
 
+## The amivuln documentation
+
+<https://ibexwall.com/amivuln/> is the documentation of
+[amivuln](https://github.com/nubian-ibex/amivuln), built and published by that
+repository to GitHub Pages under the same `/amivuln/` path. A Cloudflare Pages
+Function (`functions/amivuln/[[path]].js`) passes each request through, so
+visitors stay on this site and the documentation has one place to edit. The
+header's Products menu links to it. `pnpm test` checks the pass-through without
+the network.
+
 ## Checks
 
 ```sh
